@@ -1,0 +1,16 @@
+---
+alwaysApply: false
+---
+rules:
+  - description: "All page.tsx files are server components by default"
+  - description: "Dividde Frontend In Components & Organize UI components in src/components with subfolders per feature"
+  - description: "Keep TypeScript types and interfaces in src/types"
+  - description: "Group reusable constants in src/constants"
+  - description: "Place backend API routes in src/app/api with proper handler files"
+  - description: "Add middleware logic in src/middleware.ts for auth, redirects, etc."
+  - description: "Set meta title and description in each page.tsx using Next.js metadata API"
+  - description: "Use PascalCase for React components and camelCase for hooks and utils"
+  - description: "Name route folders and files in kebab‑case (e.g. user-profile/page.tsx)"
+  - description: "Use Tailwind CSS v4 and define custom theme values (colors, fonts, spacing) in globals.css, so it becomes easy for me to change at 1 place and it takes effect at whole app"
+  - description: "Reference custom Tailwind utilities (e.g. bg-brand-color, text-primary) instead of raw hex values and other raw values"
+---

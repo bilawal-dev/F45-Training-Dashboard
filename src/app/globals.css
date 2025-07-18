@@ -1,26 +1,278 @@
 @import "tailwindcss";
 
+/* Custom CSS variables for theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand-primary: #2d1b69;
+  --brand-secondary: #e31e24;
+  --bg-primary: #f8f9fa;
+  --text-primary: #333;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border-color: #e5e7eb;
+  --border-light: #f1f3f4;
+  --success-color: #22c55e;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --info-color: #3b82f6;
+  --current-region: #e15759;
+  --finished-region: #c5ced9;
+  --ai-chat-button: #153E5F;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* Tailwind custom utilities */
+@layer utilities {
+  .bg-brand-primary {
+    background-color: var(--brand-primary);
+  }
+  
+  .bg-brand-secondary {
+    background-color: var(--brand-secondary);
+  }
+  
+  .text-brand-primary {
+    color: var(--brand-primary);
+  }
+  
+  .text-brand-secondary {
+    color: var(--brand-secondary);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  .bg-ai-chat-button {
+    background-color: var(--ai-chat-button);
+  }
+  
+  .text-primary {
+    color: var(--text-primary);
+  }
+  
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  
+  .text-muted {
+    color: var(--text-muted);
+  }
+  
+  .border-primary {
+    border-color: var(--border-color);
+  }
+  
+  .border-light {
+    border-color: var(--border-light);
+  }
+
+  .from-brand-secondary {
+    background: linear-gradient(to right, var(--brand-secondary), var(--brand-primary));
+  }
+
+  .to-brand-primary {
+    background: linear-gradient(to right, var(--brand-primary), var(--brand-secondary));
   }
 }
 
+/* Component-specific styles that can't be easily done with Tailwind */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Sidebar animations and hover effects */
+.sidebar-item-hover {
+  transition: all 0.2s ease;
+}
+
+.sidebar-item-hover:hover {
+  transform: translateX(2px);
+}
+
+/* Tile hover effects */
+.tile-hover {
+  transition: all 0.3s ease;
+}
+
+.tile-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(45, 27, 105, 0.15);
+  border-color: var(--brand-secondary);
+}
+
+/* Progress bar animations */
+.progress-step-current {
+  background: linear-gradient(to right, var(--info-color) 90%, var(--border-color) 90%);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* AI Chat animations */
+.ai-pulse {
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
+/* Typing indicator animation */
+.typing-dot {
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Map-specific styles */
+.leaflet-popup-content-wrapper { 
+  border-radius: 5px; 
+}
+
+/* Pattern overlay for finished regions */
+.finished-pattern {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    rgba(160, 160, 160, 0.3) 3px,
+    rgba(160, 160, 160, 0.3) 6px
+  );
+  pointer-events: none;
+}
+
+/* Status badge styles */
+.status-on-track {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success-color);
+}
+
+.status-behind {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+}
+
+.status-ahead {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--info-color);
+}
+
+.status-good {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success-color);
+}
+
+.status-complete {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: var(--text-secondary);
+}
+
+/* Icon styles for status indicators */
+.icon-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-circle.complete {
+  background: var(--success-color);
+}
+
+.icon-circle.complete::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.icon-circle.progress {
+  background: #f3f4f6;
+  border: 3px solid var(--border-color);
+}
+
+.icon-circle.progress::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--info-color);
+  border-right-color: var(--info-color);
+  transform: rotate(-90deg);
+}
+
+.icon-circle.progress::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--info-color);
+}
+
+.icon-circle.pending {
+  background: #f3f4f6;
+  border: 2px solid var(--text-muted);
+}
+
+.icon-circle.pending::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 1px;
+  background: var(--text-secondary);
+  transform-origin: left center;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.icon-circle.pending::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 1px;
+  background: var(--text-secondary);
+  transform-origin: left center;
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+/* Responsive design utilities */
+@media (max-width: 768px) {
+  .mobile-flex-col {
+    flex-direction: column;
+  }
+  
+  .mobile-w-full {
+    width: 100%;
+  }
+  
+  .mobile-p-4 {
+    padding: 1rem;
+  }
 }

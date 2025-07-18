@@ -1,0 +1,2615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 240px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 0;
+        }
+
+        .logo-container {
+            padding: 24px;
+            border-bottom: 2px solid #e31e24;
+            margin-bottom: 24px;
+        }
+
+        .logo-container img {
+            height: 48px;
+            width: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .sidebar-item {
+            display: block;
+            padding: 18px 24px;
+            color: #9ca3af;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-right: 4px solid transparent;
+            font-weight: 400;
+            font-size: 15px;
+            margin-bottom: 4px;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .sidebar-item:hover {
+            color: #6b7280;
+            background-color: rgba(45, 27, 105, 0.05);
+        }
+
+        .sidebar-item.active {
+            color: #2d1b69;
+            font-weight: 600;
+            background-color: rgba(45, 27, 105, 0.15);
+            border-right-color: transparent;
+            box-shadow: 0 3px 12px rgba(45, 27, 105, 0.2);
+            transform: translateX(2px);
+        }
+
+        .sidebar-item.completed {
+            color: #6b7280;
+            font-weight: 500;
+            background-color: rgba(107, 114, 128, 0.05);
+            cursor: default;
+        }
+
+        .sidebar-item.upcoming {
+            color: #9ca3af;
+            font-weight: 400;
+            cursor: default;
+            opacity: 0.6;
+        }
+
+        .sidebar-item.current {
+            color: #6b7280;
+            font-weight: 500;
+            background-color: rgba(227, 30, 36, 0.03);
+            border-right: 4px solid rgba(227, 30, 36, 0.3);
+            cursor: default;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 32px;
+        }
+
+        /* Top Section Layout */
+        .top-section {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* Hero Tile */
+        .hero-tile {
+            flex: 3;
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #2d1b69;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero-tile #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            background-color: #ffffff;
+            position: relative;
+        }
+
+        .leaflet-popup-content-wrapper { 
+            border-radius: 5px; 
+        }
+        
+        /* Pattern overlay for finished regions */
+        .finished-pattern {
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 3px,
+                rgba(160, 160, 160, 0.3) 3px,
+                rgba(160, 160, 160, 0.3) 6px
+            );
+            pointer-events: none;
+        }
+
+        .hero-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 27, 105, 0.15);
+            border-color: #e31e24;
+        }
+
+        /* Side Tile */
+        .side-tile {
+            flex: 1;
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #2d1b69;
+        }
+
+        .side-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 27, 105, 0.15);
+            border-color: #e31e24;
+        }
+
+        /* Region Status Styling */
+        .region-status {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .region-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px 14px;
+            background: rgba(248, 249, 250, 0.6);
+            border-radius: 8px;
+            border: 1px solid rgba(229, 236, 243, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .region-item:hover {
+            background: rgba(248, 249, 250, 0.9);
+            border-color: #e31e24;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(45, 27, 105, 0.08);
+        }
+
+        .region-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .region-name {
+            color: #2d1b69;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .status-icon {
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Complete Icon - Clean Checkmark */
+        .icon-circle.complete {
+            background: #10b981;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .icon-circle.complete::after {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 4px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* Progress Icon - Modern Progress Ring */
+        .icon-circle.progress {
+            background: #f3f4f6;
+            border: 3px solid #e5e7eb;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .icon-circle.progress::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #3b82f6;
+            border-right-color: #3b82f6;
+            transform: rotate(-90deg);
+        }
+
+        .icon-circle.progress::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3b82f6;
+        }
+
+        /* Pending Icon - Clean Clock */
+        .icon-circle.pending {
+            background: #f3f4f6;
+            border: 2px solid #9ca3af;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .icon-circle.pending::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 1px;
+            background: #6b7280;
+            transform-origin: left center;
+            transform: translate(-50%, -50%) rotate(90deg);
+        }
+
+        .icon-circle.pending::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 1px;
+            background: #6b7280;
+            transform-origin: left center;
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        .store-count {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: left;
+            margin-left: 2px;
+        }
+
+        /* Second Row - 4 Across */
+        .second-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .second-row-tile {
+            height: 150px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #2d1b69;
+        }
+
+        .second-row-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 27, 105, 0.15);
+            border-color: #e31e24;
+        }
+
+        .tile-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .tile-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .tile-status {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-on-track {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .status-behind {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .status-ahead {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        /* Progress Bar Tile */
+        .progress-tile {
+            height: 150px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .progress-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 27, 105, 0.15);
+            border-color: #e31e24;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d1b69;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .progress-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .progress-step {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            position: relative;
+            background-color: #e5e7eb;
+        }
+
+        .progress-step.completed {
+            background-color: #22c55e;
+        }
+
+        .progress-step.current {
+            background: linear-gradient(to right, #3b82f6 90%, #e5e7eb 90%);
+            animation: pulse 2s infinite;
+        }
+
+        .progress-step.upcoming {
+            background-color: #e5e7eb;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 4px;
+        }
+        
+        .progress-labels span {
+            flex: 1;
+            text-align: center;
+        }
+
+        .progress-summary {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #2d1b69;
+            font-weight: 600;
+        }
+
+        /* Third Row - Spreadsheet Style */
+        .spreadsheet-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .spreadsheet-header {
+            background: #f8f9fa;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #2d1b69;
+        }
+
+        .spreadsheet-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .spreadsheet-table th {
+            background: #f1f3f4;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2d1b69;
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+            font-size: 12px;
+            line-height: 1.3;
+            vertical-align: top;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 100px;
+        }
+
+        .spreadsheet-table th:last-child {
+            border-right: none;
+        }
+
+        .spreadsheet-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f3f4;
+            border-right: 1px solid #f1f3f4;
+            color: #6b7280;
+        }
+
+        .spreadsheet-table td:last-child {
+            border-right: none;
+        }
+
+        .spreadsheet-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .spreadsheet-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Map Legend Styling */
+        .map-legend {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            font-size: 12px;
+            line-height: 1.4;
+            min-width: 200px;
+            z-index: 1000;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            color: #2d1b69;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .legend-section {
+            margin-bottom: 12px;
+        }
+
+        .legend-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-subtitle {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            gap: 8px;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .legend-color.current {
+            background-color: #e15759;
+        }
+
+        .legend-color.finished {
+            background-color: #c5ced9;
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(136, 136, 136, 0.4) 2px,
+                rgba(136, 136, 136, 0.4) 4px
+            );
+        }
+
+        .legend-color.to-start {
+            background-color: #c5ced9;
+            opacity: 0.4;
+        }
+
+        .legend-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-circle.completed {
+            background-color: #3b82f6;
+            border: 1px solid #ffffff;
+        }
+
+        .legend-circle.in-progress {
+            background-color: #ffffff;
+            border: 2px solid #3b82f6;
+        }
+
+        .legend-circle.other {
+            background-color: #000000;
+            border: 1px solid #ffffff;
+            opacity: 0.4;
+        }
+
+        .legend-text {
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 16px 0;
+            }
+            
+            .main-content {
+                padding: 16px;
+            }
+            
+            .top-section {
+                flex-direction: column;
+                margin-bottom: 16px;
+            }
+            
+            .hero-tile, .side-tile {
+                height: 300px;
+            }
+            
+            .second-row {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                margin-bottom: 16px;
+            }
+            
+            .second-row-tile {
+                height: 120px;
+            }
+            
+            .spreadsheet-table {
+                font-size: 14px;
+            }
+            
+            .spreadsheet-table th,
+            .spreadsheet-table td {
+                padding: 8px 12px;
+            }
+            
+            .map-legend {
+                bottom: 8px;
+                right: 8px;
+                padding: 12px;
+                min-width: 180px;
+                font-size: 11px;
+            }
+            
+            .legend-title {
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .second-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .spreadsheet-section {
+                overflow-x: auto;
+            }
+        }
+
+        /* Region Detail View Styles */
+        .region-detail-view {
+            display: none;
+        }
+
+        .region-detail-view.active {
+            display: block;
+        }
+
+        .overview-view.active {
+            display: block;
+        }
+
+        .overview-view {
+            display: none;
+        }
+
+        .region-header-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .region-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2d1b69;
+            margin-bottom: 8px;
+        }
+
+        .region-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 20px 0 20px 0;
+            text-align: left;
+            max-width: 65%;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            padding: 12px 0;
+        }
+
+        .region-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .region-metric-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .region-metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 27, 105, 0.15);
+            border-color: #e31e24;
+        }
+
+        .metric-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2d1b69;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .metric-status {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .phase-timeline-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .phase-timeline-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d1b69;
+            margin-bottom: 20px;
+        }
+
+        .phase-timeline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .phase-step {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            position: relative;
+            background-color: #e5e7eb;
+        }
+
+        .phase-step.completed {
+            background-color: #22c55e;
+        }
+
+        .phase-step.current {
+            background: linear-gradient(to right, #3b82f6 70%, #e5e7eb 70%);
+        }
+
+        .phase-step.upcoming {
+            background-color: #e5e7eb;
+        }
+
+        .phase-labels {
+            display: flex;
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .phase-labels span {
+            flex: 1;
+            text-align: center;
+        }
+
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .activity-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            padding: 24px;
+        }
+
+        .activity-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d1b69;
+            margin-bottom: 16px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .activity-dot.success {
+            background-color: #22c55e;
+        }
+
+        .activity-dot.warning {
+            background-color: #f59e0b;
+        }
+
+        .activity-dot.info {
+            background-color: #3b82f6;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+        }
+
+        .info-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d1b69;
+            margin-bottom: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .info-value {
+            font-size: 13px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .cta-button {
+            background: none;
+            color: #9ca3af;
+            border: none;
+            padding: 0;
+            border-radius: 0;
+            font-size: 12px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: underline;
+            text-decoration-color: transparent;
+        }
+
+        .cta-button:hover {
+            color: #6b7280;
+            text-decoration-color: #6b7280;
+        }
+
+        .ai-overview-placeholder {
+            color: #d1d5db;
+            font-style: italic;
+        }
+
+        .ai-overview-trigger {
+            color: #6366f1;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            position: relative;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .ai-overview-trigger:hover {
+            color: #4f46e5;
+            text-decoration: underline;
+        }
+
+        .ai-tooltip {
+            position: fixed;
+            background: #1f2937;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            width: 320px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .ai-tooltip.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(-100%) translateY(-8px);
+        }
+
+        .ai-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #1f2937;
+        }
+
+        .ai-tooltip-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f59e0b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-tooltip-content {
+            color: #e5e7eb;
+        }
+
+        .ai-tooltip-content strong {
+            color: #22c55e;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-on-track {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .status-behind {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .status-complete {
+            background-color: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .status-ahead {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        /* AI Chat Widget Styles */
+        .ai-chat-widget {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 2000;
+        }
+
+        .ai-chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e31e24, #1B0E50);
+            border: none;
+            box-shadow: 0 8px 24px rgba(227, 30, 36, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-chat-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(227, 30, 36, 0.4);
+        }
+
+        .ai-chat-button.active {
+            transform: scale(0.9);
+        }
+
+        .ai-chat-icon {
+            width: 28px;
+            height: 28px;
+            fill: white;
+            transition: all 0.3s ease;
+        }
+
+        .ai-chat-panel {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            width: 380px;
+            height: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e5e7eb;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-chat-panel.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .ai-chat-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #e31e24, #1B0E50);
+            border-radius: 16px 16px 0 0;
+            color: white;
+        }
+
+        .ai-chat-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .ai-chat-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .ai-chat-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .ai-quick-actions {
+            margin-bottom: 20px;
+        }
+
+        .ai-actions-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .ai-action-button {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ai-action-button:hover {
+            background: #f1f3f4;
+            border-color: #e31e24;
+            transform: translateY(-1px);
+        }
+
+        .ai-conversation {
+            display: none;
+        }
+
+        .ai-conversation.active {
+            display: block;
+        }
+
+        .ai-message {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .ai-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .ai-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ai-avatar.ai {
+            background: linear-gradient(135deg, #e31e24, #1B0E50);
+        }
+
+        .ai-avatar.user {
+            background: #e5e7eb;
+        }
+
+        .ai-avatar-icon {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        .ai-avatar.user .ai-avatar-icon {
+            fill: #6b7280;
+        }
+
+        .ai-message-content {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            max-width: 280px;
+        }
+
+        .ai-message.ai .ai-message-content {
+            background: #f1f3f4;
+            color: #374151;
+        }
+
+        .ai-message.user .ai-message-content {
+            background: #1B0E50;
+            color: white;
+        }
+
+        .ai-back-button {
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 8px 0;
+            margin-bottom: 12px;
+            transition: color 0.2s ease;
+        }
+
+        .ai-back-button:hover {
+            color: #374151;
+        }
+
+        .ai-typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+        }
+
+        .ai-typing-indicator.active {
+            display: flex;
+        }
+
+        .ai-typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .ai-typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #9ca3af;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .ai-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .ai-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .ai-pulse {
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 50%;
+            background: rgba(227, 30, 36, 0.3);
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/F45-logo.svg/1200px-F45-logo.svg.png" alt="F45" />
+            </div>
+                            <a href="#" class="sidebar-item active" data-view="overview">Overview</a>
+            <span class="sidebar-item upcoming">Northeast</span>
+            <a href="#" class="sidebar-item current" data-view="southeast">Southeast</a>
+            <a href="#" class="sidebar-item completed">Midwest</a>
+            <a href="#" class="sidebar-item completed">West</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview View -->
+            <div class="overview-view active">
+                <!-- Top Section with Hero and Side Tile -->
+                <div class="top-section">
+                    <div class="hero-tile">
+                        <div id="map"></div>
+                        <!-- Map Legend -->
+                        <div class="map-legend">
+                            <div class="legend-title">Map Legend</div>
+                            
+                            <div class="legend-section">
+                                <div class="legend-subtitle">Regions</div>
+                                <div class="legend-item">
+                                    <div class="legend-color current"></div>
+                                    <span class="legend-text">Current Region</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color finished"></div>
+                                    <span class="legend-text">Completed Regions</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color to-start"></div>
+                                    <span class="legend-text">Upcoming Regions</span>
+                                </div>
+                            </div>
+                            
+                            <div class="legend-section">
+                                <div class="legend-subtitle">Locations</div>
+                                <div class="legend-item">
+                                    <div class="legend-circle completed"></div>
+                                    <span class="legend-text">Completed</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-circle in-progress"></div>
+                                    <span class="legend-text">In Progress</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-circle other"></div>
+                                    <span class="legend-text">Other Regions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="side-tile">
+                        <div class="region-status">
+                            <div class="region-item">
+                                <div class="region-header">
+                                    <span class="region-name">Northeast</span>
+                                    <span class="status-icon planned">
+                                        <!-- Taller, subtle calendar icon for planned status with more rows of dots -->
+                                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                                            <rect x="3" y="4" width="22" height="20" rx="5" fill="#f6f7fa" stroke="#e5e7eb" stroke-width="1.5"/>
+                                            <rect x="8" y="2.5" width="2" height="3" rx="1" fill="#e5e7eb"/>
+                                            <rect x="18" y="2.5" width="2" height="3" rx="1" fill="#e5e7eb"/>
+                                            <line x1="3" y1="9" x2="25" y2="9" stroke="#e5e7eb" stroke-width="1"/>
+                                            <!-- 4 rows of dots (days) -->
+                                            <rect x="7.5" y="11" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="12" y="11" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="16.5" y="11" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="7.5" y="14.5" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="12" y="14.5" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="16.5" y="14.5" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="7.5" y="18" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="12" y="18" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="16.5" y="18" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="7.5" y="21.5" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="12" y="21.5" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                            <rect x="16.5" y="21.5" width="2" height="2" rx="1" fill="#d1d5db"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="store-count">0/195 stores</div>
+                            </div>
+                            
+                            <div class="region-item">
+                                <div class="region-header">
+                                    <span class="region-name">Southeast</span>
+                                    <span class="status-icon in-progress">
+                                        <!-- In Progress Icon -->
+                                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                                          <circle cx="16" cy="16" r="14" stroke="#3b82f6" stroke-width="4" opacity="0.2"/>
+                                          <path d="M16 2a14 14 0 1 1-9.9 24" stroke="#3b82f6" stroke-width="4" fill="none" stroke-linecap="round"/>
+                                          <path d="M12 17l3 3 6-6" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="store-count">102/210 stores</div>
+                            </div>
+                            <div class="region-item">
+                                <div class="region-header">
+                                    <span class="region-name">Midwest</span>
+                                    <span class="status-icon completed">
+                                        <!-- Completed Icon -->
+                                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                                          <circle cx="16" cy="16" r="16" fill="#22c55e"/>
+                                          <path d="M10 17l4 4 8-8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="store-count">185/185 stores</div>
+                            </div>
+                            <div class="region-item">
+                                <div class="region-header">
+                                    <span class="region-name">West</span>
+                                    <span class="status-icon completed">
+                                        <!-- Completed Icon -->
+                                        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                                          <circle cx="16" cy="16" r="16" fill="#22c55e"/>
+                                          <path d="M10 17l4 4 8-8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="store-count">210/210 stores</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Second Row - Overview Metrics -->
+                <div class="second-row">
+                    <div class="second-row-tile">
+                        <div class="tile-number">87%</div>
+                        <div class="tile-label">Project Health Score</div>
+                        <div class="tile-status status-on-track">Good</div>
+                    </div>
+                    <div class="second-row-tile">
+                        <div class="tile-number">7 days</div>
+                        <div class="tile-label">Ahead of Schedule</div>
+                        <div class="tile-status status-ahead">Ahead</div>
+                    </div>
+                    <div class="progress-tile">
+                        <div class="progress-title">Project Timeline Progress</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-step completed"></div>
+                            <div class="progress-step completed"></div>
+                            <div class="progress-step completed"></div>
+                            <div class="progress-step current"></div>
+                            <div class="progress-step upcoming"></div>
+                        </div>
+                        <div class="progress-labels">
+                            <span>Planning</span>
+                            <span>West</span>
+                            <span>Midwest</span>
+                            <span>Southeast</span>
+                            <span>Northeast</span>
+                        </div>
+                        <div class="progress-summary">Month 10 of 18 • 497/800 locations completed</div>
+                    </div>
+                </div>
+
+                <!-- Third Row - Regional Overview -->
+                <div class="spreadsheet-section">
+                    <div class="spreadsheet-header">
+                        Regional Performance Overview
+                    </div>
+                    <table class="spreadsheet-table">
+                        <thead>
+                            <tr>
+                                <th>Region</th>
+                                <th>Timeline</th>
+                                <th>Locations</th>
+                                <th>Completion %</th>
+                                <th>Schedule Status</th>
+                                <th>Current Phase</th>
+                                <th>Issues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>West</strong></td>
+                                <td>Months 4-6</td>
+                                <td>210/210</td>
+                                <td><span style="color: #22c55e; font-weight: 600;">100%</span></td>
+                                <td><span style="color: #22c55e;">On Time</span></td>
+                                <td>Completed</td>
+                                <td>0</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Midwest</strong></td>
+                                <td>Months 7-9</td>
+                                <td>185/185</td>
+                                <td><span style="color: #22c55e; font-weight: 600;">100%</span></td>
+                                <td><span style="color: #3b82f6;">3 Days Early</span></td>
+                                <td>Completed</td>
+                                <td>0</td>
+                            </tr>
+                            <tr style="background: rgba(59, 130, 246, 0.05);">
+                                <td><strong>Southeast</strong></td>
+                                <td>Months 10-12</td>
+                                <td>102/210</td>
+                                <td><span style="color: #f59e0b; font-weight: 600;">49%</span></td>
+                                <td><span style="color: #3b82f6;">1 Week Ahead</span></td>
+                                <td>Installation</td>
+                                <td>2</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Northeast</strong></td>
+                                <td>Months 13-15</td>
+                                <td>0/195</td>
+                                <td><span style="color: #9ca3af; font-weight: 600;">0%</span></td>
+                                <td><span style="color: #9ca3af;">Scheduled</span></td>
+                                <td>Planning</td>
+                                <td>0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Southeast Region Detail View -->
+            <div class="region-detail-view" id="southeast-view">
+                <!-- Region Header -->
+                <div class="region-header-section">
+                    <div class="region-title">Southeast Region</div>
+                    <div class="region-subtitle">Texas, Oklahoma, Arkansas, Louisiana, Mississippi, Alabama, Georgia, Florida, South Carolina, North Carolina, Tennessee, Kentucky, West Virginia, Virginia, Maryland, Delaware, District of Columbia</div>
+                </div>
+
+                <!-- Key Metrics -->
+                <div class="region-metrics">
+                    <div class="region-metric-card">
+                        <div class="metric-number">102/210</div>
+                        <div class="metric-label">Locations Completed</div>
+                        <div class="metric-status status-ahead">49% Complete</div>
+                    </div>
+                    <div class="region-metric-card">
+                        <div class="metric-number">7 days</div>
+                        <div class="metric-label">Ahead of Schedule</div>
+                        <div class="metric-status status-ahead">On Track</div>
+                    </div>
+                    <div class="region-metric-card">
+                        <div class="metric-number">Installation</div>
+                        <div class="metric-label">Current Phase</div>
+                        <div class="metric-status status-on-track">Active</div>
+                    </div>
+                    <div class="region-metric-card">
+                        <div class="metric-number">2</div>
+                        <div class="metric-label">Locations Need Attention</div>
+                        <div class="metric-status status-behind">Action Required</div>
+                    </div>
+                </div>
+
+                <!-- Phase Timeline -->
+                <div class="phase-timeline-section">
+                    <div class="phase-timeline-title">Southeast Region Phase Progress</div>
+                    <div class="phase-timeline">
+                        <div class="phase-step completed"></div>
+                        <div class="phase-step completed"></div>
+                        <div class="phase-step completed"></div>
+                        <div class="phase-step current"></div>
+                        <div class="phase-step current"></div>
+                        <div class="phase-step upcoming"></div>
+                    </div>
+                    <div class="phase-labels">
+                        <span>Planning</span>
+                        <span>Permitting</span>
+                        <span>Production</span>
+                        <span>Shipping</span>
+                        <span>Installation</span>
+                        <span>Close-out</span>
+                    </div>
+                </div>
+
+                <!-- Two Column Layout -->
+                <div class="two-column-layout">
+                    <!-- Main State Table -->
+                    <div class="spreadsheet-section">
+                        <div class="spreadsheet-header">
+                            State-by-State Progress
+                        </div>
+                        <table class="spreadsheet-table">
+                            <thead>
+                                <tr>
+                                    <th>State</th>
+                                    <th>Complete</th>
+                                    <th>Current Phase</th>
+                                    <th>Status</th>
+                                    <th>Issues</th>
+                                    <th>AI Summary</th>
+                                    <th>Designs</th>
+                                    <th>Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Texas</strong></td>
+                                    <td>28/52</td>
+                                    <td>Installation</td>
+                                    <td><span class="status-badge status-ahead">Ahead</span></td>
+                                    <td>1</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>2 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Florida</strong></td>
+                                    <td>18/31</td>
+                                    <td>Installation</td>
+                                    <td><span class="status-badge status-on-track">On Track</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>4 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Georgia</strong></td>
+                                    <td>15/24</td>
+                                    <td>Installation</td>
+                                    <td><span class="status-badge status-on-track">On Track</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>1 day ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>North Carolina</strong></td>
+                                    <td>12/22</td>
+                                    <td>Shipping</td>
+                                    <td><span class="status-badge status-behind">Behind</span></td>
+                                    <td>1</td>
+                                    <td><span class="ai-overview-trigger" data-state="north-carolina">AI Summary ⓘ</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>6 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Virginia</strong></td>
+                                    <td>11/19</td>
+                                    <td>Installation</td>
+                                    <td><span class="status-badge status-on-track">On Track</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>3 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>South Carolina</strong></td>
+                                    <td>9/15</td>
+                                    <td>Installation</td>
+                                    <td><span class="status-badge status-on-track">On Track</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>1 day ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tennessee</strong></td>
+                                    <td>6/13</td>
+                                    <td>Shipping</td>
+                                    <td><span class="status-badge status-on-track">On Track</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>8 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Maryland</strong></td>
+                                    <td>3/11</td>
+                                    <td>Production</td>
+                                    <td><span class="status-badge status-on-track">On Track</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>5 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Alabama</strong></td>
+                                    <td>0/8</td>
+                                    <td>Permitting</td>
+                                    <td><span class="status-badge status-on-track">On Track</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>2 days ago</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Other States</strong></td>
+                                    <td>0/15</td>
+                                    <td>Planning</td>
+                                    <td><span class="status-badge status-on-track">Scheduled</span></td>
+                                    <td>0</td>
+                                    <td><span class="ai-overview-placeholder">—</span></td>
+                                    <td><button class="cta-button">View Approved Designs</button></td>
+                                    <td>1 week ago</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Activity Feed -->
+                    <div class="activity-card">
+                        <div class="activity-title">Recent Activity</div>
+                        <div class="activity-item">
+                            <div class="activity-dot success"></div>
+                            <div class="activity-content">
+                                <div class="activity-text">3 locations completed in Houston, TX</div>
+                                <div class="activity-time">2 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot info"></div>
+                            <div class="activity-content">
+                                <div class="activity-text">Permit approved for Charlotte, NC batch</div>
+                                <div class="activity-time">6 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot warning"></div>
+                            <div class="activity-content">
+                                <div class="activity-text">Weather delay resolved in Raleigh, NC</div>
+                                <div class="activity-time">1 day ago</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot success"></div>
+                            <div class="activity-content">
+                                <div class="activity-text">Production shipment arrived in Atlanta</div>
+                                <div class="activity-time">2 days ago</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot info"></div>
+                            <div class="activity-content">
+                                <div class="activity-text">Virginia batch entered installation phase</div>
+                                <div class="activity-time">3 days ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-card-title">Upcoming Milestones</div>
+                        <div class="info-item">
+                            <span class="info-label">Next 7 days</span>
+                            <span class="info-value">18 installations scheduled</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Permit deadlines</span>
+                            <span class="info-value">4 applications due this week</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Production shipments</span>
+                            <span class="info-value">6 batches arriving Monday</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Phase transition</span>
+                            <span class="info-value">Alabama → Production (Est. Dec 15)</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-card-title">Quality Metrics</div>
+                        <div class="info-item">
+                            <span class="info-label">Installation success rate</span>
+                            <span class="info-value">98.5% first-time approval</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Permit approval rate</span>
+                            <span class="info-value">94% approved on first submission</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Customer satisfaction</span>
+                            <span class="info-value">4.8/5 average rating</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Rework incidents</span>
+                            <span class="info-value">1.2% of completed locations</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-card-title">Resource Allocation</div>
+                        <div class="info-item">
+                            <span class="info-label">Installation crews</span>
+                            <span class="info-value">6 active, 2 on standby</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Current capacity</span>
+                            <span class="info-value">22-25 locations per week</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Primary bottleneck</span>
+                            <span class="info-value">Urban permit complexity</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Next crew rotation</span>
+                            <span class="info-value">December 20th</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-card-title">Problem Locations</div>
+                        <div class="info-item">
+                            <span class="info-label">Dallas Downtown, TX</span>
+                            <span class="info-value" style="color: #ef4444;">2 days behind</span>
+                        </div>
+                        <div style="font-size: 11px; color: #6b7280; margin-bottom: 12px;">
+                            Permit amendment required. Resolution expected Dec 12.
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Charlotte Metro, NC</span>
+                            <span class="info-value" style="color: #f59e0b;">1 day behind</span>
+                        </div>
+                        <div style="font-size: 11px; color: #6b7280;">
+                            Material delivery delay. Installation rescheduled for tomorrow.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI Chat Widget -->
+    <div class="ai-chat-widget">
+        <button class="ai-chat-button" id="aiChatButton" style="background: #0033a0; box-shadow: 0 8px 24px rgba(0, 51, 160, 0.18);">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink"
+            width="512" height="512" x="0" y="0" viewBox="0 0 60 60" style="enable-background:new 0 0 512 512"
+            xml:space="preserve" class="">
+                <g>
+                    <!-- Main circle with integrated chat bubble tail -->
+                    <path fill="#153e5f" d="M30 1c-16.02 0-29 12.98-29 29 0 6.94 2.43 13.3 6.5 18.29-.82 2.81-2.21 5.49-4 7.57-.37.42-.07 1.09.5 1.11 3.7.19 7.43-.64 10.78-2.28C19.2 57.43 24.42 59 30 59c16.02 0 29-12.98 29-29S46.02 1 30 1zm-17.5 44.5c0-1 .8-1.8 1.8-1.8h.01c.99 0 1.79.8 1.79 1.8 0 .99-.8 1.79-1.79 1.79-.99 0-1.8-.8-1.8-1.79zm7.5 13.5c-2.5-.5-4.9-1.3-7.2-2.4 1.2-1.5 2.2-3.2 2.8-5.1 1.2.3 2.5.5 3.8.5 1.2 0 2.4-.1 3.6-.3-.7 2.1-1.7 4-3 5.3zm-7.5-13.5c0-1 .8-1.8 1.8-1.8h.01c.99 0 1.79.8 1.79 1.8 0 .99-.8 1.79-1.79 1.79-.99 0-1.8-.8-1.8-1.79z"/>
+                    <!-- Larger, smooth chat bubble tail overlay -->
+                    <path d="M8 44 Q2 58, 22 54 Q12 50, 16 44" fill="#153e5f"/>
+                    <path fill="#da5726" d="M28 17.02v-4c0-1.11.9-2.02 2-2.02.55 0 1.05.22 1.41.59.37.37.59.87.59 1.43v4z" opacity="1" data-original="#adbfc4" class=""/>
+                    <path fill="#da5726" d="M36 20.02v2H24v-2c0-2.21 2.69-4 6-4s6 1.79 6 4zM13.34 39.02H12c-2.21 0-4-1.79-4-4v-6c0-2.21 1.79-4 4-4h1.34zM46.66 25.02H48c2.21 0 4 1.79 4 4v6c0 2.21-1.79 4-4 4h-1.34z" opacity="1" data-original="#bdccd1" class=""/>
+                    <rect width="36" height="24" x="12" y="20.02" fill="#da5726" rx="10" opacity="1" data-original="#d8e1e5" class=""/>
+                    <rect width="28" height="14" x="16" y="25.02" fill="#fbfeff" rx="7" opacity="1" data-original="#203b51" class=""/>
+                    <g fill="#3e9ddd">
+                        <circle cx="22" cy="32.02" r="2" fill="#153e5f" opacity="1" data-original="#3e9ddd" class=""/>
+                        <circle cx="38" cy="32.02" r="2" fill="#153e5f" opacity="1" data-original="#3e9ddd" class=""/>
+                        <path d="M30 36.02c-1.475 0-2.474-.908-2.832-1.445a1 1 0 0 1 1.656-1.122c.03.042.432.567 1.176.567.764 0 1.164-.55 1.168-.555a1 1 0 1 1 1.664 1.11c-.358.537-1.357 1.445-2.832 1.445z" fill="#153e5f" opacity="1" data-original="#3e9ddd" class=""/>
+                    </g>
+                </g>
+            </svg>
+        </button>
+        
+        <div class="ai-chat-panel" id="aiChatPanel">
+            <div class="ai-chat-header">
+                <div class="ai-chat-title">🤖 F45 AI Assistant</div>
+                <div class="ai-chat-subtitle">Get instant insights and updates</div>
+            </div>
+            
+            <div class="ai-chat-content">
+                <!-- Quick Actions View -->
+                <div class="ai-quick-actions" id="aiQuickActions">
+                    <div class="ai-actions-title">How can I help you today?</div>
+                    
+                    <button class="ai-action-button" data-action="project-status">
+                        📊 Get project status summary
+                    </button>
+                    
+                    <button class="ai-action-button" data-action="southeast-update">
+                        🎯 Southeast region update
+                    </button>
+                    
+                    <button class="ai-action-button" data-action="upcoming-deadlines">
+                        ⏰ Show upcoming deadlines
+                    </button>
+                    
+                    <button class="ai-action-button" data-action="resource-allocation">
+                        👥 Resource allocation analysis
+                    </button>
+                    
+                    <button class="ai-action-button" data-action="issue-resolution">
+                        🚨 Help resolve current issues
+                    </button>
+                    
+                    <button class="ai-action-button" data-action="leave-message">
+                        💬 Leave message with team
+                    </button>
+                </div>
+                
+                <!-- Conversation View -->
+                <div class="ai-conversation" id="aiConversation">
+                    <button class="ai-back-button" id="aiBackButton">← Back to menu</button>
+                    
+                    <div class="ai-typing-indicator" id="aiTypingIndicator">
+                        <div class="ai-avatar ai">
+                            <svg class="ai-avatar-icon" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <div style="color: #6b7280; font-size: 12px;">AI is typing</div>
+                        <div class="ai-typing-dots">
+                            <div class="ai-typing-dot"></div>
+                            <div class="ai-typing-dot"></div>
+                            <div class="ai-typing-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-messages" id="aiMessages"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarItems = document.querySelectorAll('.sidebar-item[data-view]');
+            const overviewView = document.querySelector('.overview-view');
+            const regionDetailView = document.querySelector('.region-detail-view');
+
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all sidebar items
+                    sidebarItems.forEach(sidebarItem => {
+                        sidebarItem.classList.remove('active');
+                        
+                        // Don't remove 'current' from southeast - it should always stay red as the current phase
+                        if (sidebarItem.getAttribute('data-view') !== 'southeast') {
+                            sidebarItem.classList.remove('current');
+                        }
+                        
+                        // Add completed class to overview when not active
+                        if (sidebarItem.getAttribute('data-view') === 'overview') {
+                            sidebarItem.classList.add('completed');
+                        }
+                    });
+                    
+                    // Add active class to clicked item and remove completed if it's overview
+                    this.classList.add('active');
+                    if (this.getAttribute('data-view') === 'overview') {
+                        this.classList.remove('completed');
+                    }
+                    
+                    const view = this.getAttribute('data-view');
+                    
+                    if (view === 'overview') {
+                        overviewView.classList.add('active');
+                        regionDetailView.classList.remove('active');
+                    } else if (view === 'southeast') {
+                        overviewView.classList.remove('active');
+                        regionDetailView.classList.add('active');
+                    }
+                });
+            });
+
+            // AI Overview tooltip functionality
+            const aiTriggers = document.querySelectorAll('.ai-overview-trigger');
+            let activeTooltip = null;
+
+            aiTriggers.forEach(trigger => {
+                let tooltip = null;
+
+                trigger.addEventListener('mouseenter', function() {
+                    const state = this.getAttribute('data-state');
+                    
+                    if (state === 'north-carolina') {
+                        // Create tooltip
+                        tooltip = document.createElement('div');
+                        tooltip.className = 'ai-tooltip';
+                        
+                        tooltip.innerHTML = `
+                            <div class="ai-tooltip-header">
+                                🤖 AI Analysis: North Carolina
+                            </div>
+                            <div class="ai-tooltip-content">
+                                <strong>Status:</strong> Behind schedule due to external factors<br><br>
+                                <strong>Primary Delays:</strong><br>
+                                • Weather-related shipping delays (3 days)<br>
+                                • Municipal permit review backlog (4 days)<br><br>
+                                <strong>Operational Status:</strong><br>
+                                • <strong>Production:</strong> 100% complete ✓<br>
+                                • <strong>Logistics:</strong> Ready to deploy ✓<br>
+                                • <strong>Installation Teams:</strong> Fully staffed ✓<br><br>
+                                <strong>Recovery Outlook:</strong> High confidence for rapid catch-up once permits clear. All internal processes optimized.
+                            </div>
+                        `;
+                        
+                        // Get trigger element position relative to viewport
+                        const rect = this.getBoundingClientRect();
+                        const tooltipWidth = 320;
+                        
+                        // Position tooltip above the trigger element
+                        tooltip.style.left = Math.max(10, Math.min(window.innerWidth - tooltipWidth - 10, rect.left + rect.width/2 - tooltipWidth/2)) + 'px';
+                        tooltip.style.top = (rect.top - 10) + 'px';
+                        tooltip.style.transform = 'translateY(-100%)';
+                        
+                        // Append to body instead of trigger element
+                        document.body.appendChild(tooltip);
+                        
+                        // Show tooltip with slight delay for smooth animation
+                        setTimeout(() => {
+                            tooltip.classList.add('show');
+                        }, 10);
+                        
+                        activeTooltip = tooltip;
+                    }
+                });
+
+                trigger.addEventListener('mouseleave', function() {
+                    if (tooltip) {
+                        tooltip.classList.remove('show');
+                        setTimeout(() => {
+                            if (tooltip && tooltip.parentNode) {
+                                document.body.removeChild(tooltip);
+                            }
+                            tooltip = null;
+                            activeTooltip = null;
+                        }, 300);
+                    }
+                });
+            });
+        });
+
+        // --- 1. DEFINE YOUR FOUR DISTINCT REGIONS WITH STATUSES ---
+        const regions = {
+            "Northeast": {
+                states: ["Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New York", "Pennsylvania", "New Jersey"],
+                status: "to_be_started"
+            },
+            "Southeast": {
+                states: ["Texas", "Oklahoma", "Arkansas", "Louisiana", "Mississippi", "Alabama", "Georgia", "Florida", "South Carolina", "North Carolina", "Tennessee", "Kentucky", "West Virginia", "Virginia", "Maryland", "Delaware", "District of Columbia"],
+                status: "current"
+            },
+            "Midwest": {
+                states: ["North Dakota", "South Dakota", "Nebraska", "Kansas", "Minnesota", "Iowa", "Missouri", "Wisconsin", "Illinois", "Indiana", "Michigan", "Ohio"],
+                status: "finished"
+            },
+            "West": {
+                states: ["Washington", "Oregon", "California", "Idaho", "Nevada", "Utah", "Arizona", "Montana", "Wyoming", "Colorado", "New Mexico"],
+                status: "finished"
+            }
+        };
+        
+        // --- 2. YOUR POINTS OF INTEREST (POIs) ---
+        const pois = [
+            { lat: 37.568203, lng: -77.71166,  text: "Midlothian<br>VA" },
+            { lat: 38.449296, lng: -77.461177, text: "Stafford<br>VA" },
+            { lat: 28.062,    lng: -82.413225, text: "University Park<br>FL (Sarasota UTC)" },
+            { lat: 35.812933, lng: -78.627485, text: "F45 training - Raleigh<br>NC (Five Points)" },
+            { lat: 32.814405, lng: -96.78501,  text: "Dallas<br>TX (Old East Dallas)" },
+            { lat: 40.940311, lng: -73.96092,  text: "F45 - Cresskill<br>NJ" },
+            { lat: 29.647048, lng: -98.622749, text: "San Antonio<br>TX" },
+            { lat: 39.96,     lng: -85.919452, text: "F45 - Fishers Geist<br>IN" },
+            { lat: 29.753133, lng: -95.388518, text: "FS8 Studios- Houston<br>TX" },
+            { lat: 32.571582, lng: -97.089052, text: "Mansfield<br>TX" },
+            { lat: 40.054016, lng: -74.137126, text: "Brick<br>NJ" },
+            { lat: 41.29034,  lng: -96.213792, text: "Elkhorn<br>NE" },
+            { lat: 40.967055, lng: -74.243376, text: "Wayne<br>NJ" },
+            { lat: 32.795547, lng: -79.93986,  text: "Charleston<br>SC" },
+            { lat: 36.334708, lng: -94.15875,  text: "Rogers<br>AR" },
+            { lat: 29.692688, lng: -95.439841, text: "Houston<br>TX (Central Houston)" },
+            { lat: 42.075345, lng: -88.184541, text: "South Barrington<br>IL" },
+            { lat: 30.613509, lng: -96.317607, text: "College Station<br>TX" },
+            { lat: 33.484772, lng: -117.078876,text: "Temecula<br>CA" },
+            { lat: 41.786577, lng: -72.745705, text: "F45 training - West Hartford<br>CT" },
+            { lat: 40.411357, lng: -104.995398,text: "Loveland<br>CO" },
+            { lat: 32.457036, lng: -96.990869, text: "Midlothian<br>TX" },
+            { lat: 38.838472, lng: -104.780239,text: "Jimmy Donnellon" },
+            { lat: 32.791792, lng: -96.808697, text: "Dallas<br>TX" },
+            { lat: 30.226845, lng: -97.760258, text: "Austin<br>TX (SOCO)" },
+            { lat: 30.359974, lng: -91.107708, text: "Baton Rouge<br>LA" },
+            { lat: 29.745215, lng: -95.596531, text: "Houston<br>TX" },
+            { lat: 40.296319, lng: -74.299261, text: "Manalapan<br>NJ" },
+            { lat: 41.939499, lng: -87.667455, text: "F45 Training  - Chicago<br>IL (Roscoe Village)" },
+            { lat: 42.024258, lng: -87.850469, text: "West Park Ridge<br>IL" },
+            { lat: 39.594139, lng: -104.857006,text: "Engelwood<br>CO (Centennial)" },
+            { lat: 39.981696, lng: -75.12769,  text: "FS8 Studios - Philadelphia<br>PA" },
+            { lat: 40.746688, lng: -74.038106, text: "Hoboken North<br>NJ" },
+            { lat: 42.559619, lng: -71.137734, text: "Wilmington<br>MA" },
+            { lat: 31.709123, lng: -97.248878, text: "Waco<br>TX" }
+        ];
+
+        // --- 3. MAP INITIALIZATION ---
+        var map = L.map('map', { 
+            zoomControl: false, 
+            attributionControl: false, 
+            scrollWheelZoom: false, 
+            dragging: false,
+            touchZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false
+        });
+        map.createPane('markerPane');
+        map.getPane('markerPane').style.zIndex = 650;
+        map.createPane('patternPane');
+        map.getPane('patternPane').style.zIndex = 600;
+        
+        // --- 4. DYNAMIC STYLING FUNCTIONS FOR LAYERING ---
+        function getRegionInfo(stateName) {
+            for (const regionName in regions) {
+                if (regions[regionName].states.includes(stateName)) {
+                    return { name: regionName, status: regions[regionName].status };
+                }
+            }
+            return null;
+        }
+
+        // This function styles the main color fills with NO borders.
+        function styleFills(feature) {
+            const regionInfo = getRegionInfo(feature.properties.name);
+            let color = 'transparent';
+            let fillOpacity = 1;
+
+            if (regionInfo) {
+                switch (regionInfo.status) {
+                    case 'finished':
+                        color = '#c5ced9'; // Blue-grey
+                        fillOpacity = 0.4; // More transparent overlay
+                        break;
+                    case 'current':
+                        color = '#e15759'; // Red - as is
+                        fillOpacity = 1;
+                        break;
+                    case 'to_be_started':
+                        color = '#c5ced9'; // Same as finished
+                        fillOpacity = 0.4; // More transparent overlay
+                        break;
+                }
+            }
+            return { fillColor: color, weight: 0, fillOpacity: fillOpacity };
+        }
+
+        // This function styles ONLY the borders, which are drawn on top of the fills.
+        function styleBorders(feature) {
+            const regionInfo = getRegionInfo(feature.properties.name);
+            const style = { fill: false, opacity: 1 }; // No fill, fully opaque lines
+
+            if (regionInfo) {
+                switch (regionInfo.status) {
+                    case 'finished':
+                        Object.assign(style, { color: 'white', dashArray: null, weight: 1 }); // Clean white borders
+                        break;
+                    case 'current':
+                        Object.assign(style, { color: 'white', dashArray: null, weight: 1.5 }); // As is - prominent white lines
+                        break;
+                    case 'to_be_started':
+                        Object.assign(style, { color: '#a0a0a0', dashArray: null, weight: 0.8 }); // Light grey borders
+                        break;
+                    default:
+                        Object.assign(style, { opacity: 0 }); // Hide borders for unassigned areas
+                }
+            } else {
+                Object.assign(style, { opacity: 0 }); // Hide borders for unassigned areas
+            }
+            return style;
+        }
+
+        // --- 5. LOAD GEOJSON AND APPLY LAYERED STYLES ---
+        const geoJsonUrl = 'https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json';
+        fetch(geoJsonUrl)
+            .then(response => response.json())
+            .then(data => {
+                // Add SVG pattern definition to the map
+                setTimeout(() => {
+                    const mapSvg = document.querySelector('#map svg');
+                    if (mapSvg) {
+                        // Create defs element if it doesn't exist
+                        let defs = mapSvg.querySelector('defs');
+                        if (!defs) {
+                            defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                            mapSvg.insertBefore(defs, mapSvg.firstChild);
+                        }
+                        
+                        // Create pattern
+                        const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+                        pattern.setAttribute('id', 'diagonalHatch');
+                        pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+                        pattern.setAttribute('width', '8');
+                        pattern.setAttribute('height', '8');
+                        
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', '0');
+                        line.setAttribute('y1', '0');
+                        line.setAttribute('x2', '8');
+                        line.setAttribute('y2', '8');
+                        line.setAttribute('stroke', '#888888');
+                        line.setAttribute('stroke-width', '1');
+                        line.setAttribute('opacity', '0.4');
+                        
+                        pattern.appendChild(line);
+                        defs.appendChild(pattern);
+                    }
+                }, 500);
+
+                // Layer 1: The color fills (drawn first, on the bottom)
+                const fillLayer = L.geoJson(data, {
+                    style: styleFills,
+                    filter: (feature) => feature.properties.name !== "Alaska" && feature.properties.name !== "Hawaii" && feature.properties.name !== "Puerto Rico"
+                }).addTo(map);
+
+                // Layer 2: Pattern overlay for finished regions
+                const patternLayer = L.geoJson(data, {
+                    style: function(feature) {
+                        const regionInfo = getRegionInfo(feature.properties.name);
+                        if (regionInfo && regionInfo.status === 'finished') {
+                            return {
+                                fillColor: 'url(#diagonalHatch)',
+                                weight: 0,
+                                fillOpacity: 1
+                            };
+                        }
+                        return { fillOpacity: 0, weight: 0 };
+                    },
+                    filter: (feature) => feature.properties.name !== "Alaska" && feature.properties.name !== "Hawaii" && feature.properties.name !== "Puerto Rico",
+                    pane: 'patternPane'
+                });
+                
+                // Add pattern layer after a delay to ensure SVG is ready
+                setTimeout(() => {
+                    patternLayer.addTo(map);
+                }, 600);
+
+                // Layer 3: The state borders
+                const borderLayer = L.geoJson(data, {
+                    style: styleBorders,
+                    filter: (feature) => feature.properties.name !== "Alaska" && feature.properties.name !== "Hawaii" && feature.properties.name !== "Puerto Rico"
+                }).addTo(map);
+
+                // Layer 4: Region boundaries for finished regions using external borders only
+                setTimeout(() => {
+                    // Load turf.js for geometry operations
+                    const script = document.createElement('script');
+                    script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
+                    script.onload = function() {
+                        // Group states by region for finished regions
+                        const regionGroups = {};
+                        data.features.forEach(feature => {
+                            if (feature.properties.name !== "Alaska" && feature.properties.name !== "Hawaii" && feature.properties.name !== "Puerto Rico") {
+                                const regionInfo = getRegionInfo(feature.properties.name);
+                                if (regionInfo && regionInfo.status === 'finished') {
+                                    if (!regionGroups[regionInfo.name]) {
+                                        regionGroups[regionInfo.name] = [];
+                                    }
+                                    regionGroups[regionInfo.name].push(feature);
+                                }
+                            }
+                        });
+
+                        // Create merged region boundaries
+                        Object.keys(regionGroups).forEach(regionName => {
+                            const regionFeatures = regionGroups[regionName];
+                            
+                            try {
+                                // Union all state geometries in the region
+                                let unionGeometry = regionFeatures[0];
+                                for (let i = 1; i < regionFeatures.length; i++) {
+                                    unionGeometry = turf.union(unionGeometry, regionFeatures[i]);
+                                }
+
+                                // Create the boundary layer
+                                L.geoJson(unionGeometry, {
+                                    style: {
+                                        fill: false,
+                                        color: '#000000',
+                                        weight: 0.8,
+                                        opacity: 0.8
+                                    }
+                                }).addTo(map);
+                            } catch (e) {
+                                console.warn('Could not create union for region:', regionName, e);
+                            }
+                        });
+                    };
+                    document.head.appendChild(script);
+                }, 800);
+                
+                // Fit bounds with very tight padding to minimize white space
+                map.fitBounds(borderLayer.getBounds(), {
+                    padding: [0, 0], // No padding for tightest fit
+                    maxZoom: 7 // Allow slightly more zoom
+                });
+            })
+            .catch(error => console.error('Error loading GeoJSON data:', error));
+
+        // --- 6. ADD POI MARKERS ---
+        // Function to determine POI region based on coordinates and state
+        function getPOIRegionStatus(poi) {
+            // Comprehensive state detection based on POI text and coordinates
+            const text = poi.text.toLowerCase();
+            
+            // Extract state abbreviation from POI text - much more comprehensive
+            let state = '';
+            
+            // Look for state abbreviations (most common format)
+            const stateMap = {
+                'al': 'Alabama', 'ak': 'Alaska', 'az': 'Arizona', 'ar': 'Arkansas', 'ca': 'California',
+                'co': 'Colorado', 'ct': 'Connecticut', 'de': 'Delaware', 'fl': 'Florida', 'ga': 'Georgia',
+                'hi': 'Hawaii', 'id': 'Idaho', 'il': 'Illinois', 'in': 'Indiana', 'ia': 'Iowa',
+                'ks': 'Kansas', 'ky': 'Kentucky', 'la': 'Louisiana', 'me': 'Maine', 'md': 'Maryland',
+                'ma': 'Massachusetts', 'mi': 'Michigan', 'mn': 'Minnesota', 'ms': 'Mississippi', 'mo': 'Missouri',
+                'mt': 'Montana', 'ne': 'Nebraska', 'nv': 'Nevada', 'nh': 'New Hampshire', 'nj': 'New Jersey',
+                'nm': 'New Mexico', 'ny': 'New York', 'nc': 'North Carolina', 'nd': 'North Dakota', 'oh': 'Ohio',
+                'ok': 'Oklahoma', 'or': 'Oregon', 'pa': 'Pennsylvania', 'ri': 'Rhode Island', 'sc': 'South Carolina',
+                'sd': 'South Dakota', 'tn': 'Tennessee', 'tx': 'Texas', 'ut': 'Utah', 'vt': 'Vermont',
+                'va': 'Virginia', 'wa': 'Washington', 'wv': 'West Virginia', 'wi': 'Wisconsin', 'wy': 'Wyoming'
+            };
+            
+            // Try to match state abbreviations with word boundaries
+            for (const [abbr, fullName] of Object.entries(stateMap)) {
+                const regex = new RegExp(`\\b${abbr}\\b`, 'i');
+                if (regex.test(text)) {
+                    state = fullName;
+                    break;
+                }
+            }
+            
+            // If no abbreviation found, try some full state names
+            if (!state) {
+                const fullStateNames = [
+                    'california', 'texas', 'florida', 'new york', 'pennsylvania', 'illinois', 'ohio', 
+                    'georgia', 'north carolina', 'michigan', 'new jersey', 'virginia', 'washington',
+                    'arizona', 'massachusetts', 'tennessee', 'indiana', 'missouri', 'maryland',
+                    'wisconsin', 'colorado', 'minnesota', 'south carolina', 'alabama', 'louisiana',
+                    'kentucky', 'oregon', 'oklahoma', 'connecticut', 'utah', 'iowa', 'nevada',
+                    'arkansas', 'mississippi', 'kansas', 'new mexico', 'nebraska', 'west virginia',
+                    'idaho', 'hawaii', 'new hampshire', 'maine', 'montana', 'rhode island',
+                    'delaware', 'south dakota', 'north dakota', 'alaska', 'vermont', 'wyoming'
+                ];
+                
+                for (const stateName of fullStateNames) {
+                    if (text.includes(stateName)) {
+                        state = stateName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                        break;
+                    }
+                }
+            }
+            
+            // Find region status based on state
+            for (const regionName in regions) {
+                if (regions[regionName].states.includes(state)) {
+                    return regions[regionName].status;
+                }
+            }
+            
+            // Enhanced coordinate-based fallback
+            if (poi.lng < -100) {
+                // West region
+                return 'finished';
+            } else if (poi.lat > 41 || (poi.lat > 39 && poi.lng < -80)) {
+                // Midwest/Northeast region  
+                if (poi.lng < -80) return 'finished'; // Midwest
+                else return 'to_be_started'; // Northeast
+            } else if (poi.lat < 37) {
+                // South region
+                return 'current';
+            } else {
+                // Border areas - be more specific
+                if (poi.lng > -80) return 'to_be_started'; // Northeast
+                else return 'current'; // Default to current for uncertain cases
+            }
+        }
+
+        // Function to determine if a POI in current region is completed (demo purposes)
+        function isPOICompleted(poi) {
+            // For demo, we'll mark about 70% as completed based on some criteria
+            // In real implementation, this would come from your data
+            const text = poi.text.toLowerCase();
+            
+            // Mark certain locations as completed for demonstration
+            const completedKeywords = ['dallas', 'houston', 'austin', 'san antonio', 'charleston', 'rogers', 'baton rouge', 'waco', 'mansfield'];
+            return completedKeywords.some(keyword => text.includes(keyword));
+        }
+
+        pois.forEach(poi => {
+            const regionStatus = getPOIRegionStatus(poi);
+            
+            // Set marker style based on region status
+            let markerStyle;
+            if (regionStatus === 'current') {
+                // Current region - use blue/white system for completion status
+                const isCompleted = isPOICompleted(poi);
+                
+                if (isCompleted) {
+                    // Completed locations - solid blue circles
+                    markerStyle = {
+                        radius: 5,
+                        fillColor: "#3b82f6",
+                        color: "#ffffff",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 1,
+                        pane: 'markerPane' 
+                    };
+                } else {
+                    // In progress locations - white circles with blue border
+                    markerStyle = {
+                        radius: 5,
+                        fillColor: "#ffffff",
+                        color: "#3b82f6",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 1,
+                        pane: 'markerPane' 
+                    };
+                }
+            } else {
+                // Finished and to-be-started regions - more transparent
+                markerStyle = {
+                    radius: 4,
+                    fillColor: "#000000",
+                    color: "#FFFFFF",
+                    weight: 1,
+                    opacity: 0.4,
+                    fillOpacity: 0.4,
+                    pane: 'markerPane' 
+                };
+            }
+            
+            const hoverStyle = {
+                fillColor: "#e15759", // Use the active red color for hover
+                radius: regionStatus === 'current' ? 7 : 6,
+                opacity: 1,
+                fillOpacity: 1
+            };
+
+            const marker = L.circleMarker([poi.lat, poi.lng], markerStyle);
+            marker.bindPopup(poi.text);
+            marker.on('mouseover', function () { this.setStyle(hoverStyle); this.openPopup(); });
+            marker.on('mouseout', function () { this.setStyle(markerStyle); this.closePopup(); });
+            marker.addTo(map);
+        });
+
+        // --- AI CHAT WIDGET FUNCTIONALITY ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatButton = document.getElementById('aiChatButton');
+            const chatPanel = document.getElementById('aiChatPanel');
+            const quickActions = document.getElementById('aiQuickActions');
+            const conversation = document.getElementById('aiConversation');
+            const backButton = document.getElementById('aiBackButton');
+            const messagesContainer = document.getElementById('aiMessages');
+            const typingIndicator = document.getElementById('aiTypingIndicator');
+
+            // Predefined AI responses
+            const aiResponses = {
+                'project-status': {
+                    user: "Get project status summary",
+                    ai: "📊 **Project Status Summary**\n\n✅ **Overall Health:** 87% - Good\n⏰ **Timeline:** 7 days ahead of schedule\n📍 **Current Focus:** Southeast region (49% complete)\n\n**Key Metrics:**\n• 497/800 locations completed (62%)\n• 2 regions fully completed (West, Midwest)\n• 1 active region with strong progress\n• 0 critical blockers\n\n**Next 30 Days:** Complete Southeast region, begin Northeast planning phase."
+                },
+                'southeast-update': {
+                    user: "Southeast region update",
+                    ai: "🎯 **Southeast Region Update**\n\n**Progress:** 102/210 locations (49%)\n**Status:** 7 days ahead of schedule ✨\n**Current Phase:** Installation\n\n**State Breakdown:**\n• Texas: 28/52 (Leading, 1 minor issue)\n• Florida: 18/31 (On track)\n• Georgia: 15/24 (On track)\n• N. Carolina: 12/22 (Behind due to permits)\n\n**Immediate Actions Needed:**\n🚨 Dallas Downtown, TX - Permit amendment\n⚠️ Charlotte Metro, NC - Material delivery\n\n**Forecast:** Region completion by Dec 28 (original target: Jan 4)"
+                },
+                'upcoming-deadlines': {
+                    user: "Show upcoming deadlines",
+                    ai: "⏰ **Upcoming Deadlines & Milestones**\n\n**This Week:**\n• Dec 12: Dallas permit amendment resolution\n• Dec 13: 4 permit applications due (Alabama)\n• Dec 15: Alabama → Production phase transition\n\n**Next Week:**\n• Dec 18-22: 18 installations scheduled\n• Dec 20: Crew rotation in Southeast\n• Dec 22: 6 production shipments arriving\n\n**Month End:**\n• Dec 28: Southeast region target completion\n• Dec 31: Q4 milestone review\n\n**Critical Path:** Maintain Alabama timeline to avoid Northeast delays."
+                },
+                'resource-allocation': {
+                    user: "Resource allocation analysis",
+                    ai: "👥 **Resource Allocation Analysis**\n\n**Current Capacity:**\n• 6 active installation crews\n• 2 standby crews available\n• 22-25 locations/week throughput\n\n**Utilization:**\n• Southeast: 85% capacity (optimal)\n• Support teams: 78% utilization\n• Equipment: 92% availability\n\n**Recommendations:**\n🔄 **Crew Rotation:** Dec 20th as planned\n📈 **Capacity Boost:** Add 1 crew for Northeast launch\n⚡ **Bottleneck:** Urban permit processing (not crew-related)\n\n**Cost Efficiency:** 3% under budget due to early completions"
+                },
+                'issue-resolution': {
+                    user: "Help resolve current issues",
+                    ai: "🚨 **Current Issues & Resolutions**\n\n**Issue #1: Dallas Downtown, TX**\n• Problem: Permit amendment required\n• Impact: 2 days behind schedule\n• Resolution: Amendment submitted Dec 10\n• Expected Clear: Dec 12\n• Action: Monitor city review process\n\n**Issue #2: Charlotte Metro, NC**\n• Problem: Material delivery delay\n• Impact: 1 day behind schedule\n• Resolution: Expedited shipping arranged\n• Expected Delivery: Tomorrow AM\n• Action: Crew standing by for install\n\n**Preventive Measures:**\n✅ Buffer inventory increased by 15%\n✅ Backup permit applications filed earlier\n\n**Risk Level:** Low - both issues have clear resolution paths"
+                },
+                'leave-message': {
+                    user: "Leave message with team",
+                    ai: "💬 **Message Center**\n\nI can help you send a message to:\n\n🏗️ **Field Operations Team**\n📋 **Project Managers**\n🎯 **Regional Coordinators**\n📊 **Executive Dashboard**\n\n**Quick Messages:**\n• Request status update\n• Report field observations\n• Escalate urgent issue\n• Schedule coordination call\n• Resource request\n\n*Note: All messages are logged and routed to appropriate team members based on urgency and content.*\n\nWhat would you like to communicate?"
+                }
+            };
+
+            // Toggle chat panel
+            chatButton.addEventListener('click', function() {
+                const isActive = chatPanel.classList.contains('active');
+                chatPanel.classList.toggle('active');
+                chatButton.classList.toggle('active');
+                
+                if (!isActive) {
+                    // Reset to quick actions view when opening
+                    showQuickActions();
+                }
+            });
+
+            // Close chat when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!chatButton.contains(e.target) && !chatPanel.contains(e.target)) {
+                    chatPanel.classList.remove('active');
+                    chatButton.classList.remove('active');
+                }
+            });
+
+            // Handle action button clicks
+            document.querySelectorAll('.ai-action-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    if (aiResponses[action]) {
+                        startConversation(action);
+                    }
+                });
+            });
+
+            // Back button
+            backButton.addEventListener('click', showQuickActions);
+
+            function showQuickActions() {
+                quickActions.style.display = 'block';
+                conversation.classList.remove('active');
+                messagesContainer.innerHTML = '';
+            }
+
+            function showConversation() {
+                quickActions.style.display = 'none';
+                conversation.classList.add('active');
+            }
+
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `ai-message ${sender}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = `ai-avatar ${sender}`;
+                
+                const avatarIcon = document.createElement('svg');
+                avatarIcon.className = 'ai-avatar-icon';
+                avatarIcon.setAttribute('viewBox', '0 0 24 24');
+                
+                if (sender === 'ai') {
+                    avatarIcon.innerHTML = '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>';
+                } else {
+                    avatarIcon.innerHTML = '<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>';
+                }
+                
+                avatar.appendChild(avatarIcon);
+                
+                const content = document.createElement('div');
+                content.className = 'ai-message-content';
+                content.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(content);
+                
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            function startConversation(action) {
+                showConversation();
+                
+                const response = aiResponses[action];
+                
+                // Add user message
+                addMessage(response.user, 'user');
+                
+                // Show typing indicator
+                typingIndicator.classList.add('active');
+                
+                // Simulate AI response delay
+                setTimeout(() => {
+                    typingIndicator.classList.remove('active');
+                    addMessage(response.ai, 'ai');
+                }, 1500 + Math.random() * 1000); // 1.5-2.5 second delay
+            }
+        });
+    </script>
+</body>
+</html>
