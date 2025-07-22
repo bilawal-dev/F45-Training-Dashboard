@@ -156,9 +156,6 @@ export default function AIChatWidget() {
             </g>
           </g>
         </svg>
-        {!isOpen && (
-          <div className="absolute -inset-1 rounded-full bg-ai-chat-button opacity-30" />
-        )}
       </button>
 
       {/* Chat Panel - Conditional Rendering */}

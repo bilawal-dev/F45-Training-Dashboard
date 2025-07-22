@@ -16,7 +16,6 @@
   --info-color: #3b82f6;
   --current-region: #e15759;
   --finished-region: #c5ced9;
-  --ai-chat-button: #153E5F;
 }
 
 /* Tailwind custom utilities */
@@ -35,10 +34,6 @@
   
   .text-brand-secondary {
     color: var(--brand-secondary);
-  }
-
-  .bg-ai-chat-button {
-    background-color: var(--ai-chat-button);
   }
   
   .text-primary {

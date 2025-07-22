@@ -1,9 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { POI } from '@/types/dashboard';
+
+interface MapComponentProps {
+  pois?: POI[];
+}
 
 // Dynamically import Leaflet only on client side to avoid SSR issues
-const MapComponent = dynamic(() => import('./map-client'), {
+const MapClient = dynamic(() => import('./map-client'), {
   ssr: false,
   loading: () => (
     <div className="h-96 bg-white rounded-xl shadow-sm border border-primary flex items-center justify-center">
@@ -11,5 +16,9 @@ const MapComponent = dynamic(() => import('./map-client'), {
     </div>
   )
 });
+
+const MapComponent: React.FC<MapComponentProps> = ({ pois }) => {
+  return <MapClient pois={pois} />;
+};
 
 export default MapComponent; 

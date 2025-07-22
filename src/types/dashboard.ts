@@ -49,4 +49,20 @@ export interface AIResponse {
   ai: string;
 }
 
-export type ViewType = 'overview' | 'southeast' | 'northeast' | 'midwest' | 'west'; 
+export type Status = 'completed' | 'in-progress' | 'upcoming' | 'active' | 'heading';
+
+export type ViewType = 
+  | 'overview' 
+  | 'northeast' 
+  | 'southeast' 
+  | 'midwest' 
+  | 'west'
+  | 'regional-heading';
+
+export interface SidebarItem {
+  id: ViewType;
+  label: string;
+  icon?: string;
+  status: Status;
+  clickable: boolean;
+} 

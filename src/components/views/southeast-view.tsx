@@ -23,7 +23,7 @@ export default function SoutheastView() {
       'behind': 'status-behind',
       'scheduled': 'status-complete'
     };
-    
+
     const statusTexts = {
       'ahead': 'Ahead',
       'on-track': 'On Track',
@@ -68,7 +68,7 @@ export default function SoutheastView() {
           Southeast Region
         </h1>
         <p className="text-secondary text-sm leading-relaxed max-w-4xl font-normal tracking-wide py-3">
-          Texas, Oklahoma, Arkansas, Louisiana, Mississippi, Alabama, Georgia, Florida, South Carolina, 
+          Texas, Oklahoma, Arkansas, Louisiana, Mississippi, Alabama, Georgia, Florida, South Carolina,
           North Carolina, Tennessee, Kentucky, West Virginia, Virginia, Maryland, Delaware, District of Columbia
         </p>
       </div>
@@ -111,7 +111,7 @@ export default function SoutheastView() {
       </div>
 
       {/* Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-primary p-5">
           <h3 className="text-sm font-semibold text-brand-primary mb-3">
             Upcoming Milestones
@@ -212,4 +212,4 @@ export default function SoutheastView() {
       </div>
     </div>
   );
-} 
+}

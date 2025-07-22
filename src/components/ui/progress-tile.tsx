@@ -1,16 +1,22 @@
+import React from 'react';
+
 interface ProgressTileProps {
   title: string;
   phases: string[];
   currentPhaseIndex: number;
-  summary: string;
+  completionPercentage: number;
+  summary?: string;
 }
 
-export default function ProgressTile({ 
-  title, 
-  phases, 
-  currentPhaseIndex, 
-  summary 
+export default function ProgressTile({
+  title,
+  phases,
+  currentPhaseIndex,
+  completionPercentage,
+  summary
 }: ProgressTileProps) {
+  const progressPercent = (completionPercentage / 100) * 100;
+  
   const getPhaseClasses = (index: number) => {
     const baseClasses = "flex-1 h-2 rounded-sm";
     
@@ -24,7 +30,7 @@ export default function ProgressTile({
   };
 
   return (
-    <div className="h-38 bg-white rounded-xl shadow-sm border border-primary transition-all duration-300 tile-hover p-6 flex flex-col justify-center">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 h-full flex flex-col justify-between">
       {title && (
         <div className="text-base font-semibold text-brand-primary mb-4 text-center">
           {title}

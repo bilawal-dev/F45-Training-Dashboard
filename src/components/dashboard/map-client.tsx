@@ -3,14 +3,22 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { REGIONS, POIS } from '@/constants/dashboard-data';
+import { POI } from '@/types/dashboard';
 
 // Import leaflet CSS
 import 'leaflet/dist/leaflet.css';
 
-export default function MapClient() {
+interface MapClientProps {
+  pois?: POI[];
+}
+
+export default function MapClient({ pois }: MapClientProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+  // Use provided POIs or fall back to static POIs
+  const mapPOIs = pois && pois.length > 0 ? pois : POIS;
 
   useEffect(() => {
     // Add delay to ensure DOM is fully ready
@@ -198,7 +206,7 @@ export default function MapClient() {
     };
 
     // Add POI markers
-    POIS.forEach(poi => {
+    mapPOIs.forEach(poi => {
       const regionStatus = getPOIRegionStatus(poi);
       
       let markerStyle: any;
