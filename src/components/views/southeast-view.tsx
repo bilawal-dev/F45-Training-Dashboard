@@ -89,7 +89,8 @@ export default function SoutheastView() {
           title=""
           phases={southeastPhases}
           currentPhaseIndex={currentPhaseIndex}
-          summary=""
+          completionPercentage={49} // Added default value to match static data
+          summary="102/210 stores completed"
         />
       </div>
 
