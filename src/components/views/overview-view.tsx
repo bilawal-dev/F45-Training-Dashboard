@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import MapComponent from '@/components/dashboard/map-component';
 import MetricTile from '@/components/ui/metric-tile';
