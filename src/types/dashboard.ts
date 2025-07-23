@@ -29,11 +29,8 @@ export interface StateProgress {
 }
 
 export interface ActivityItem {
-  id: string;
-  user: string;
-  avatar: string;
-  action: string;
-  target: string;
+  type: 'success' | 'warning' | 'info';
+  text: string;
   time: string;
 }
 

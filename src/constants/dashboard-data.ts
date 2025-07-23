@@ -175,31 +175,26 @@ export const SOUTHEAST_STATES: StateProgress[] = [
 
 export const ACTIVITY_ITEMS: ActivityItem[] = [
   {
-    id: "1",
     type: "success",
     text: "3 locations completed in Houston, TX",
     time: "2 hours ago"
   },
   {
-    id: "2", 
     type: "info",
     text: "Permit approved for Charlotte, NC batch",
     time: "6 hours ago"
   },
   {
-    id: "3",
     type: "warning",
     text: "Weather delay resolved in Raleigh, NC", 
     time: "1 day ago"
   },
   {
-    id: "4",
     type: "success",
     text: "Production shipment arrived in Atlanta",
     time: "2 days ago"
   },
   {
-    id: "5",
     type: "info",
     text: "Virginia batch entered installation phase",
     time: "3 days ago"
