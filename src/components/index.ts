@@ -7,7 +7,7 @@ export { default as AIChatWidget } from './dashboard/ai-chat-widget';
 
 // View Components
 export { default as OverviewView } from './views/overview-view';
-export { default as SoutheastView } from './views/southeast-view';
+export { default as RegionView } from './views/region-view';
 
 // UI Components
 export { default as MetricTile } from './ui/metric-tile';
