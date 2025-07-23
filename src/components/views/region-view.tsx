@@ -2,9 +2,14 @@ import MetricTile from '@/components/ui/metric-tile';
 import ProgressTile from '@/components/ui/progress-tile';
 import DataTable from '@/components/ui/data-table';
 import ActivityFeed from '@/components/ui/activity-feed';
-import { SOUTHEAST_METRICS, SOUTHEAST_STATES, ACTIVITY_ITEMS } from '@/constants/dashboard-data';
+import { ACTIVITY_ITEMS } from '@/constants/dashboard-data';
+import { RegionData, StateData, MetricCard } from '@/types/dashboard';
 
-export default function SoutheastView() {
+interface RegionViewProps {
+  regionData: RegionData;
+}
+
+export default function RegionView({ regionData }: RegionViewProps) {
   const stateTableHeaders = [
     'State',
     'Complete',
@@ -38,7 +43,7 @@ export default function SoutheastView() {
     );
   };
 
-  const stateTableRows = SOUTHEAST_STATES.map(state => [
+  const stateTableRows = regionData.states.map((state: StateData) => [
     <strong key={state.name}>{state.name}</strong>,
     state.completed,
     state.currentPhase,
@@ -57,25 +62,21 @@ export default function SoutheastView() {
     state.lastUpdated
   ]);
 
-  const southeastPhases = ['Planning', 'Permitting', 'Production', 'Shipping', 'Installation', 'Close-out'];
-  const currentPhaseIndex = 4; // Installation
-
   return (
     <div className="space-y-6">
       {/* Region Header */}
       <div className="bg-white rounded-xl shadow-sm border border-primary p-6">
         <h1 className="text-3xl font-bold text-brand-primary mb-2">
-          Southeast Region
+          {regionData.name} Region
         </h1>
         <p className="text-secondary text-sm leading-relaxed max-w-4xl font-normal tracking-wide py-3">
-          Texas, Oklahoma, Arkansas, Louisiana, Mississippi, Alabama, Georgia, Florida, South Carolina,
-          North Carolina, Tennessee, Kentucky, West Virginia, Virginia, Maryland, Delaware, District of Columbia
+          {regionData.stateList.join(', ')}
         </p>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {SOUTHEAST_METRICS.map((metric, index) => (
+        {regionData.metrics.map((metric: MetricCard, index: number) => (
           <MetricTile key={index} metric={metric} />
         ))}
       </div>
@@ -83,14 +84,14 @@ export default function SoutheastView() {
       {/* Phase Timeline */}
       <div className="bg-white rounded-xl shadow-sm border border-primary p-6">
         <h2 className="text-lg font-semibold text-brand-primary mb-5">
-          Southeast Region Phase Progress
+          {regionData.name} Region Phase Progress
         </h2>
         <ProgressTile
           title=""
-          phases={southeastPhases}
-          currentPhaseIndex={currentPhaseIndex}
-          completionPercentage={49} // Added default value to match static data
-          summary="102/210 stores completed"
+          phases={regionData.phases}
+          currentPhaseIndex={regionData.currentPhaseIndex}
+          completionPercentage={regionData.completionPercentage}
+          summary={regionData.summary}
         />
       </div>
 

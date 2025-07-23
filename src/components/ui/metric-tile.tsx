@@ -12,7 +12,9 @@ export default function MetricTile({ metric }: MetricTileProps) {
       'on-track': 'status-on-track',
       'behind': 'status-behind', 
       'ahead': 'status-ahead',
-      'good': 'status-good'
+      'good': 'status-good',
+      'active': 'status-active',
+      'info': 'status-info'
     };
     
     return `${baseClasses} ${statusClasses[type as keyof typeof statusClasses] || ''}`;

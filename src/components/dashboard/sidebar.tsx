@@ -2,10 +2,13 @@
 
 import { ViewType } from '@/types/dashboard';
 import Image from 'next/image';
+import { REGIONAL_DATA } from '@/constants/regional-data';
 
 interface SidebarProps {
   activeView: ViewType;
   onViewChange: (view: ViewType) => void;
+  isStatic: boolean;
+  regionStatus: { name: string; totalStores: number }[];
 }
 
 interface SidebarItem {
@@ -16,54 +19,41 @@ interface SidebarItem {
   clickable: boolean;
 }
 
-const sidebarItems: SidebarItem[] = [
+const sidebarItems: Omit<SidebarItem, 'clickable'>[] = [
   {
     id: 'overview',
     label: 'Overview',
     icon: 'home',
     status: 'completed',
-    clickable: true
   },  
   {
     id: 'northeast',
     label: 'Northeast',
     icon: 'compass',
     status: 'upcoming',
-    clickable: false
   },
   {
     id: 'southeast',
     label: 'Southeast',
     icon: 'compass',
     status: 'current',
-    clickable: true
   },
   {
     id: 'midwest',
     label: 'Midwest',
     icon: 'compass',
     status: 'completed',
-    clickable: false
   },
   {
     id: 'west',
     label: 'West',
     icon: 'compass',
     status: 'completed',
-    clickable: false
   }
 ];
 
 const getItemClasses = (item: SidebarItem, isActive: boolean) => {
   const baseClasses = "flex items-center justify-between px-6 py-3 text-left w-full transition-colors duration-200";
-  
-  if (item.status === 'test') {
-    return `${baseClasses} ${
-      isActive 
-        ? 'bg-blue-100 text-blue-800 border-r-4 border-blue-600' 
-        : 'text-blue-600 hover:bg-blue-50'
-    }`;
-  }
   
   if (!item.clickable) {
     return `${baseClasses} text-gray-400 cursor-not-allowed`;
@@ -72,20 +62,24 @@ const getItemClasses = (item: SidebarItem, isActive: boolean) => {
   if (isActive) {
     return `${baseClasses} bg-blue-100 text-black border-r-4 border-blue-600`;
   }
-
-  switch (item.status) {
-    case 'completed':
-      return `${baseClasses} text-brand-primary hover:bg-blue-100`;
-    case 'current':
-      return `${baseClasses} text-brand-primary hover:bg-blue-100 font-medium`;
-    case 'upcoming':
-      return `${baseClasses} text-gray-500 hover:bg-gray-50`;
-    default:
-      return `${baseClasses} text-gray-700 hover:bg-gray-50`;
-  }
+  
+  return `${baseClasses} text-black hover:bg-blue-100`;
 };
 
-export default function Sidebar({ activeView, onViewChange }: SidebarProps) {
+export default function Sidebar({ activeView, onViewChange, isStatic, regionStatus }: SidebarProps) {
+    const processedSidebarItems: SidebarItem[] = sidebarItems.map(item => {
+        let isClickable;
+        if (isStatic) {
+            isClickable = item.id === 'overview' || (REGIONAL_DATA[item.id] && REGIONAL_DATA[item.id].stateList.length > 0);
+        } else {
+            const region = regionStatus.find(r => r.name.toLowerCase() === item.id);
+            isClickable = item.id === 'overview' || (region ? region.totalStores > 0 : false);
+        }
+        return {
+            ...item,
+            clickable: isClickable
+        };
+    });
   return (
     <nav className="w-60 bg-white border-r border-primary">
       <div className="p-6 border-b-2 border-brand-secondary mb-6">
@@ -101,7 +95,7 @@ export default function Sidebar({ activeView, onViewChange }: SidebarProps) {
       </div>
       
       <div className="flex flex-col gap-4">
-        {sidebarItems.map((item) => {
+        {processedSidebarItems.map((item) => {
           const isActive = activeView === item.id;
           
           return (

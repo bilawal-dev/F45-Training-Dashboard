@@ -30,8 +30,10 @@ export interface StateProgress {
 
 export interface ActivityItem {
   id: string;
-  type: 'success' | 'warning' | 'info';
-  text: string;
+  user: string;
+  avatar: string;
+  action: string;
+  target: string;
   time: string;
 }
 
@@ -39,7 +41,7 @@ export interface MetricCard {
   number: string;
   label: string;
   status?: {
-    type: 'on-track' | 'behind' | 'ahead' | 'good';
+    type: 'on-track' | 'behind' | 'ahead' | 'good' | 'active' | 'info';
     text: string;
   };
 }
@@ -65,4 +67,24 @@ export interface SidebarItem {
   icon?: string;
   status: Status;
   clickable: boolean;
+} 
+
+export interface StateData {
+  name: string;
+  completed: string;
+  currentPhase: string;
+  status: string;
+  issues: number;
+  hasAISummary: boolean;
+  lastUpdated: string;
+}
+export interface RegionData {
+  name: string;
+  stateList: string[];
+  metrics: MetricCard[];
+  phases: string[];
+  currentPhaseIndex: number;
+  completionPercentage: number;
+  summary: string;
+  states: StateData[];
 } 

@@ -163,7 +163,7 @@ function transformClickUpDataToDashboard(clickUpData: any) {
       number: `${clickUpData.overview.projectHealthScore}%`,
       label: 'Project Health Score',
       status: { 
-        type: clickUpData.overview.projectHealthScore >= 80 ? 'good' : clickUpData.overview.projectHealthScore >= 60 ? 'warning' : 'bad', 
+        type: clickUpData.overview.projectHealthScore >= 80 ? 'good' : clickUpData.overview.projectHealthScore >= 60 ? 'ahead' : 'behind', 
         text: clickUpData.overview.projectHealthScore >= 80 ? 'Good' : clickUpData.overview.projectHealthScore >= 60 ? 'Fair' : 'Poor'
       }
     },

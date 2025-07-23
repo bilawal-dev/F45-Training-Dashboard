@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import Sidebar from '@/components/dashboard/sidebar';
 import OverviewView from '@/components/views/overview-view';
-import SoutheastView from '@/components/views/southeast-view';
+import RegionView from '@/components/views/region-view';
 import AIChatWidget from '@/components/dashboard/ai-chat-widget';
 import { ViewType } from '@/types/dashboard';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { REGIONAL_DATA } from '@/constants/regional-data';
 
 export default function DashboardContainer() {
   const [activeView, setActiveView] = useState<ViewType>('overview');
@@ -16,8 +17,15 @@ export default function DashboardContainer() {
     switch (activeView) {
       case 'overview':
         return <OverviewView dashboardData={dashboardData} />;
+      case 'northeast':
       case 'southeast':
-        return <SoutheastView />;
+      case 'midwest':
+      case 'west':
+        const regionData = REGIONAL_DATA[activeView];
+        if (!regionData || regionData.stateList.length === 0) {
+            return <OverviewView dashboardData={dashboardData} />;
+        }
+        return <RegionView regionData={regionData} />;
       default:
         return <OverviewView dashboardData={dashboardData} />;
     }
@@ -25,7 +33,12 @@ export default function DashboardContainer() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      <Sidebar
+        activeView={activeView}
+        onViewChange={setActiveView}
+        isStatic={dashboardData.isStatic}
+        regionStatus={dashboardData.data.regionStatus}
+      />
 
       <main className="flex-1 p-8 mobile-p-4">
         {renderCurrentView()}
