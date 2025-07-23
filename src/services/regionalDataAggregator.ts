@@ -353,21 +353,18 @@ export class RegionalDataAggregator {
         
         if (completion === 100) {
           activities.push({
-            id: `activity-${project.id}`,
             type: 'success',
             text: `${project.name} completed in ${location}`,
             time: `${index + 1} ${index === 0 ? 'hour' : 'hours'} ago`
           });
         } else if (completion > 80) {
           activities.push({
-            id: `activity-${project.id}`,
             type: 'info',
             text: `${project.name} nearing completion in ${location} (${completion}%)`,
             time: `${index + 2} hours ago`
           });
         } else if (completion > 0) {
           activities.push({
-            id: `activity-${project.id}`,
             type: 'info',
             text: `Progress update for ${project.name} in ${location} (${completion}%)`,
             time: `${index + 1} day${index > 0 ? 's' : ''} ago`
