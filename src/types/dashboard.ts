@@ -8,6 +8,7 @@ export interface POI {
   lat: number;
   lng: number;
   text: string;
+  isCompleted?: boolean;
 }
 
 export interface RegionStatus {

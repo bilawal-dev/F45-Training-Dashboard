@@ -72,9 +72,6 @@ export default function OverviewView({ dashboardData }: OverviewViewProps) {
     row.issues
   ]);
 
-  const projectPhases = ['Planning', 'West', 'Midwest', 'Southeast', 'Northeast'];
-  const currentPhaseIndex = 3; // Southeast
-
   // Loading state
   if (isLoading) {
     return (

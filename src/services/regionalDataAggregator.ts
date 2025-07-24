@@ -59,7 +59,6 @@ export class RegionalDataAggregator {
    * Get complete dashboard data for a specific folder
    */
   async getDashboardDataByFolder(folderId: string): Promise<DashboardData> {
-    console.log(`🔄 [RegionalAggregator] Processing data for folder: ${folderId}`);
 
     // Check cache first
     const cached = this.cache.get(folderId);
@@ -78,10 +77,11 @@ export class RegionalDataAggregator {
       }
 
       const folderName = folderProjects[0].customerFolder;
-      console.log(`📁 [RegionalAggregator] Processing ${folderProjects.length} projects in folder: ${folderName}`);
 
       // Step 2: Process projects with location data
       const projectsWithLocation = await this.processProjectsWithLocation(folderProjects);
+
+      console.log('projectsWithLocation', projectsWithLocation);
 
       // Step 3: Generate regional metrics
       const regionalMetrics = this.generateRegionalMetrics(projectsWithLocation);
@@ -112,13 +112,6 @@ export class RegionalDataAggregator {
         timestamp: Date.now()
       });
 
-      console.log(`✅ [RegionalAggregator] Generated dashboard data for ${folderName}:`, {
-        totalProjects: dashboardData.totalProjects,
-        projectsWithLocation: dashboardData.projectsWithLocation,
-        regions: dashboardData.regions.length,
-        mapPoints: dashboardData.mapPOIs.length
-      });
-
       return dashboardData;
 
     } catch (error) {
@@ -131,7 +124,6 @@ export class RegionalDataAggregator {
    * Process projects and enrich with location data and detailed project metrics
    */
   private async processProjectsWithLocation(projects: any[]): Promise<ProjectWithLocation[]> {
-    console.log(`🔍 [RegionalAggregator] Enriching ${projects.length} projects with location and task data...`);
 
     const projectsWithLocation: ProjectWithLocation[] = [];
 
@@ -158,7 +150,6 @@ export class RegionalDataAggregator {
             try {
               const projectData = await ClickUpAPIService.getProcessedProjectData(project.id);
               projectWithLocation.projectData = projectData;
-              console.log(`📊 [RegionalAggregator] Enriched "${project.name}" with ${projectData.allTasks.length} tasks, ${projectData.overallCompletion}% complete`);
             } catch (projectError) {
               console.warn(`⚠️ [RegionalAggregator] Could not fetch project data for "${project.name}":`, projectError);
             }
@@ -329,12 +320,14 @@ export class RegionalDataAggregator {
    * Generate map POIs from projects with location data
    */
   private generateMapPOIs(projects: ProjectWithLocation[]): POI[] {
+    console.log('projects in maps call', projects);
     return projects
       .filter(p => p.locationData?.latitude && p.locationData?.longitude)
       .map(project => ({
         lat: project.locationData!.latitude!,
         lng: project.locationData!.longitude!,
-        text: `${project.name}<br/>${project.locationData!.city}, ${project.locationData!.state}`
+        text: `${project.name}<br/>${project.locationData!.city}, ${project.locationData!.state}`,
+        isCompleted: (project.projectData?.overallCompletion ?? 0) === 100
       }));
   }
 

@@ -199,21 +199,13 @@ export default function MapClient({ pois }: MapClientProps) {
       }
     };
 
-    const isPOICompleted = (poi: any) => {
-      const text = poi.text.toLowerCase();
-      const completedKeywords = ['dallas', 'houston', 'austin', 'san antonio', 'charleston', 'rogers', 'baton rouge', 'waco', 'mansfield'];
-      return completedKeywords.some(keyword => text.includes(keyword));
-    };
-
     // Add POI markers
     mapPOIs.forEach(poi => {
       const regionStatus = getPOIRegionStatus(poi);
       
       let markerStyle: any;
       if (regionStatus === 'current') {
-        const isCompleted = isPOICompleted(poi);
-        
-        if (isCompleted) {
+        if (poi.isCompleted) {
           markerStyle = {
             radius: 5,
             fillColor: "#3b82f6",

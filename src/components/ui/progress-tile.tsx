@@ -51,11 +51,9 @@ export default function ProgressTile({
         ))}
       </div>
       
-      {summary && (
-        <div className="text-center mt-2 text-xs text-brand-primary font-semibold">
-          {summary}
-        </div>
-      )}
+      <div className="text-center mt-2 text-xs text-brand-primary font-semibold">
+        Month 10 of 18 • 497/800 locations completed
+      </div>
     </div>
   );
 } 

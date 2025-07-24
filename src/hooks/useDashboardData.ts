@@ -100,7 +100,6 @@ export function useDashboardData() {
     }));
 
     try {
-      console.log(`🔄 [useDashboardData] Loading data for folder: ${folderId}`);
       const clickUpData = await regionalDataAggregator.getDashboardDataByFolder(folderId);
 
       // Transform ClickUp data to dashboard format
@@ -115,8 +114,6 @@ export function useDashboardData() {
         data: transformedData
       }));
 
-      console.log(`✅ [useDashboardData] Successfully loaded data for ${clickUpData.folderName}`);
-
     } catch (error) {
       console.error('❌ [useDashboardData] Failed to load dynamic data:', error);
       setDashboardData(prev => ({
@@ -130,10 +127,8 @@ export function useDashboardData() {
 
   const setSelectedFolder = (folderId: string | null, folderName?: string) => {
     if (folderId) {
-      console.log(`🎯 [useDashboardData] Setting folder: ${folderName} (${folderId})`);
       router.push(`/?folderId=${folderId}`);
     } else {
-      console.log(`🏠 [useDashboardData] Returning to static view`);
       router.push('/');
     }
   };

@@ -38,19 +38,16 @@ export class LocationProvider {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.log('🔄 [LocationProvider] Already initialized, skipping...');
       return;
     }
 
     try {
-      console.log('🚀 [LocationProvider] Initializing location data...');
       
       const projectIntakeListId = KNOWN_IDS.projectIntakeListId;
       if (!projectIntakeListId) {
         throw new Error("Project Intake List ID is not configured in KNOWN_IDS. Please check your configuration.");
       }
       
-      console.log(`🎯 [LocationProvider] Using Project Intake list ID: ${projectIntakeListId}`);
 
       // Fetch Project Intake tasks
       const tasksData = await ClickUpAPIService.getProjectTasks(projectIntakeListId);
@@ -58,8 +55,6 @@ export class LocationProvider {
       if (!tasksData?.tasks) {
         throw new Error('No tasks found in Project Intake list');
       }
-
-      console.log(`📋 [LocationProvider] Processing ${tasksData.tasks.length} location entries...`);
 
       // Process each task to extract location data
       tasksData.tasks.forEach((task: any) => {
@@ -73,7 +68,6 @@ export class LocationProvider {
           const cleanName = this.cleanProjectName(locationData.projectName);
           this.locationMap.set(cleanName, locationData);
           
-          console.log(`📍 [LocationProvider] Mapped: "${locationData.projectName}" → ${locationData.city}, ${locationData.state} (${locationData.region})`);
         }
       });
 
@@ -81,8 +75,6 @@ export class LocationProvider {
       this.buildRegionalSummaries();
 
       this.isInitialized = true;
-      console.log(`✅ [LocationProvider] Initialized with ${this.locationMap.size} location mappings`);
-      console.log(`🗺️ [LocationProvider] Regional summary:`, Object.fromEntries(this.regionalSummaries));
 
     } catch (error) {
       console.error('❌ [LocationProvider] Failed to initialize:', error);
@@ -200,14 +192,12 @@ export class LocationProvider {
     // Try exact match first
     let location = this.locationMap.get(projectName);
     if (location) {
-      console.log(`✅ [LocationProvider] Exact match: "${projectName}" → "${location.projectName}"`);
       return location;
     }
 
     // Try convention-based matching: "Dallas Location" → "Crumbl - Dallas Location"
     for (const [key, loc] of this.locationMap) {
       if (key.includes(' - ') && key.endsWith(projectName)) {
-        console.log(`🎯 [LocationProvider] Convention match: "${projectName}" → "${key}"`);
         return loc;
       }
     }
@@ -216,7 +206,6 @@ export class LocationProvider {
     const cleanName = this.cleanProjectName(projectName);
     location = this.locationMap.get(cleanName);
     if (location) {
-      console.log(`✅ [LocationProvider] Cleaned match: "${projectName}" → "${location.projectName}"`);
       return location;
     }
 
@@ -233,12 +222,10 @@ export class LocationProvider {
       );
 
       if (matchingWords.length > 0 && matchingWords.length >= Math.min(projectWords.length * 0.5, 1)) {
-        console.log(`🔗 [LocationProvider] Fuzzy match: "${projectName}" → "${loc.projectName}" (matched: ${matchingWords.join(', ')})`);
         return loc;
       }
     }
 
-    console.log(`⚠️ [LocationProvider] No location found for project: "${projectName}"`);
     return null;
   }
 

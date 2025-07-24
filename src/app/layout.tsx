@@ -14,13 +14,13 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
         <Script id="crisp" strategy="afterInteractive">
           {`
             window.$crisp = [];
-            window.CRISP_WEBSITE_ID = "e3864e09-457b-4237-860c-4e1b5e3bdd8c";
+            window.CRISP_WEBSITE_ID = "367e7c66-9a5b-4673-83ce-8c3a4a8116fe";
             (function(){
               const d=document;
               const s=d.createElement("script");
               s.src="https://client.crisp.chat/l.js";
               s.async=1;
-              d.head.appendChild(s);
+              d.getElementsByTagName("head")[0].appendChild(s);
             })();
           `}
         </Script>

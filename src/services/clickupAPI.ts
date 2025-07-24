@@ -161,7 +161,6 @@ export class ClickUpAPIService {
         try {
             // Get projects space structure
             const projectsSpace = await ClickUpAPIService.getProjectsSpace();
-            console.log('projectsSpace', projectsSpace);
             if (!projectsSpace) {
                 throw new Error('Projects space not found');
             }
@@ -294,6 +293,9 @@ export class ClickUpAPIService {
 
             const phaseGroups: Record<string, any> = {};
             const allTasks: any[] = [];
+
+            console.log('clickup api - projectDetails', projectDetails);
+            console.log('clickup api - tasksData', tasksData);
 
             if (tasksData.tasks) {
                 tasksData.tasks.forEach((task: any) => {

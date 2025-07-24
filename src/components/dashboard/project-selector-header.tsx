@@ -33,7 +33,6 @@ const ProjectSelectorHeader: React.FC<ProjectSelectorHeaderProps> = ({
       setIsLoadingProjects(true);
       
       try {
-        console.log('🔍 [ProjectSelector] Fetching projects from ClickUp...');
         
         // Import ClickUpAPIService dynamically to avoid SSR issues
         const { ClickUpAPIService } = await import('@/services/clickupAPI');
@@ -51,7 +50,6 @@ const ProjectSelectorHeader: React.FC<ProjectSelectorHeaderProps> = ({
               return a.name.localeCompare(b.name);
             });
 
-          console.log(`📋 [ProjectSelector] Loaded ${activeProjects.length} active projects`);
           setProjects(activeProjects);
         } else {
           console.warn('⚠️ [ProjectSelector] No projects returned from ClickUp');
@@ -73,9 +71,7 @@ const ProjectSelectorHeader: React.FC<ProjectSelectorHeaderProps> = ({
     setSelectedFolder(folderName);
     setShowProjectDropdown(false);
     setSearchTerm('');
-    
-    console.log(`🎯 [ProjectSelector] Selected folder: ${folderName} (${folderId})`);
-    
+        
     if (onFolderSelect) {
       onFolderSelect(folderId, folderName);
     }
