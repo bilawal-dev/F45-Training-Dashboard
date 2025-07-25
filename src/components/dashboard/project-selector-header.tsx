@@ -182,7 +182,7 @@ const ProjectSelectorHeader: React.FC<ProjectSelectorHeaderProps> = ({
                           return (
                             <button
                               key={customerFolder}
-                              onClick={() => handleFolderSelect(customerFolder, folderId)}
+                              onClick={() => window.location.href = `/?folderId=${folderId}`}
                               className={`w-full flex items-center justify-between px-3 py-2 text-left rounded-lg transition-colors group ${
                                 selectedFolder === customerFolder
                                   ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-500 font-semibold'
