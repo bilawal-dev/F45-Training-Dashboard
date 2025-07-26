@@ -14,6 +14,8 @@ const ChatwootLoader = () => {
     const folderId = searchParams.get('folderId');
 
     useEffect(() => {
+        const websiteToken = process.env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN;
+        
         const loadChatwoot = () => {
             const BASE_URL = "https://app.chatwoot.com";
             const script = document.createElement('script');
@@ -26,7 +28,7 @@ const ChatwootLoader = () => {
                 if (window.chatwootSDK) {
                     // @ts-ignore
                     window.chatwootSDK.run({
-                        websiteToken: 'EdMAHVMAch7UKDpnQoPKko3r',
+                        websiteToken: websiteToken,
                         baseUrl: BASE_URL,
                     });
                 }
@@ -43,6 +45,11 @@ const ChatwootLoader = () => {
         };
 
         if (!folderId) {
+            return;
+        }
+
+        if (!websiteToken) {
+            console.error("Chatwoot website token is not configured.");
             return;
         }
 
