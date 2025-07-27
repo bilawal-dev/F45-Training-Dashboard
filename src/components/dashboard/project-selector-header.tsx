@@ -112,7 +112,7 @@ const ProjectSelectorHeader: React.FC<ProjectSelectorHeaderProps> = ({
         </div>
 
         {/* Project Selector */}
-        <div className="relative">
+        <div className="relative z-20">
           <button
             onClick={() => {
               setShowProjectDropdown(!showProjectDropdown);

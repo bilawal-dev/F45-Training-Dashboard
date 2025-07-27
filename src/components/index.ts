@@ -5,6 +5,9 @@ export { default as MapComponent } from './dashboard/map-component';
 export { default as MapClient } from './dashboard/map-client';
 export { default as AIChatWidget } from './dashboard/ai-chat-widget';
 
+// Chat Widget Components
+export * from './chat-widget';
+
 // View Components
 export { default as OverviewView } from './views/overview-view';
 export { default as RegionView } from './views/region-view';

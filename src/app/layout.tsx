@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ChatwootLoader from "./ChatWootLoader";
+import { ChatWidget } from "@/components/chat-widget";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
@@ -13,11 +14,14 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
     <html suppressHydrationWarning={true} lang="en">
       <body suppressHydrationWarning={true} className="antialiased">
 
-        <Suspense fallback={<div>Loading...</div>}>
+        {/* <Suspense fallback={<div>Loading...</div>}>
           <ChatwootLoader />
-        </Suspense>
+        </Suspense> */}
 
         {children}
+
+        {/* Custom Chat Widget */}
+        <ChatWidget />
       </body>
     </html>
   );

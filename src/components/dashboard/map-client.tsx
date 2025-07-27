@@ -275,7 +275,7 @@ export default function MapClient({ pois }: MapClientProps) {
   }, []);
 
   return (
-    <div className="h-96 bg-white rounded-xl shadow-sm border border-primary transition-all duration-300 tile-hover relative overflow-hidden">
+    <div className="h-96 bg-white rounded-xl shadow-sm border border-primary transition-all duration-300 tile-hover relative overflow-hidden z-10">
       <div 
         ref={mapContainerRef} 
         className="w-full h-full rounded-xl" 
@@ -290,7 +290,7 @@ export default function MapClient({ pois }: MapClientProps) {
       )}
       
       {/* Map Legend */}
-      <div className="absolute bottom-4 right-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200 text-xs leading-relaxed min-w-48 z-[1000]">
+      <div className="absolute bottom-4 right-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200 text-xs leading-relaxed min-w-48 z-20">
         <div className="font-semibold text-brand-primary mb-3 text-sm">
           Map Legend
         </div>
