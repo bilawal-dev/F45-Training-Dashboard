@@ -3,6 +3,8 @@ import "./globals.css";
 import ChatwootLoader from "./ChatWootLoader";
 import { ChatWidget } from "@/components/chat-widget";
 import { Suspense } from "react";
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "F45 Dashboard - Project Management System",
@@ -13,15 +15,19 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
   return (
     <html suppressHydrationWarning={true} lang="en">
       <body suppressHydrationWarning={true} className="antialiased">
+        <Toaster />
 
         {/* <Suspense fallback={<div>Loading...</div>}>
-          <ChatwootLoader />
-        </Suspense> */}
+            <ChatwootLoader />
+            </Suspense> */}
 
         {children}
 
-        {/* Custom Chat Widget */}
-        <ChatWidget />
+        <AuthProvider>
+          {/* Custom Chat Widget */}
+          <ChatWidget />
+        </AuthProvider>
+
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { MapPin, Plus, Circle, Clock, AlertCircle } from 'lucide-react';
-import { Location, Thread, ChatSidebarProps } from './types';
+import { ChatSidebarProps } from './types';
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   locations,
@@ -13,14 +13,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onThreadSelect,
   onStartNewThread
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online': return 'text-green-500';
-      case 'away': return 'text-yellow-500';
-      case 'offline': return 'text-gray-400';
-      default: return 'text-gray-400';
-    }
-  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -55,15 +47,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Circle size={8} className={`fill-current ${getStatusColor(location.status)}`} />
+                <Circle size={8} className={`fill-current text-green-500`} />
                 <span className="text-sm font-medium truncate">{location.name}</span>
               </div>
               <div className="flex items-center space-x-1">
-                {location.unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                    {location.unreadCount}
-                  </span>
-                )}
                 <span className="text-xs text-gray-500">{location.threadCount}</span>
               </div>
             </div>

@@ -5,4 +5,4 @@ export { ChatThread } from './chat-thread';
 export { ChatInput } from './chat-input';
 
 // Types
-export * from './types'; 
+export * from './types';
