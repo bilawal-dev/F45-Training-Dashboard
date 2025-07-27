@@ -213,7 +213,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
                             />
                         </>
                     ) : (
-                        <div className="flex-1 flex items-center justify-center text-gray-500">
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
                             <MessageSquare size={48} className="mx-auto mb-4 text-gray-300" />
                             <p className="text-sm">Select a thread to start chatting</p>
                         </div>
