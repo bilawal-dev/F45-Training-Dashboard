@@ -25,7 +25,9 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
 
         <AuthProvider>
           {/* Custom Chat Widget */}
-          <ChatWidget />
+          <Suspense fallback={<div>Loading...</div>}>
+            <ChatWidget />
+          </Suspense>
         </AuthProvider>
 
       </body>
