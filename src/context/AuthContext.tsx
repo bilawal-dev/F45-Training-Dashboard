@@ -27,7 +27,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("silicon_sign_chat_auth");
+    const token = localStorage.getItem("silicon-sign-chat-access-token");
 
     if (token) {
       const verifyToken = async () => {
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(data);
           } else {
             if (response.status === 403) {
-              localStorage.removeItem("silicon_sign_chat_auth")
+              localStorage.removeItem("silicon-sign-chat-access-token")
             };
             setUser(null);
           }
@@ -70,12 +70,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const data = await response.json();
 
       if (data.success && data.token) {
-        localStorage.setItem("silicon_sign_chat_auth", data.token);
+        localStorage.setItem("silicon-sign-chat-access-token", data.token);
         toast.success("Signin Successful");
         
         // No redirect, just update user state
         const userData: User = { 
-          id: data.user.id, 
+          userId: data.user.userId, 
           name: data.user.name, 
           email: data.user.email 
         };
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      localStorage.removeItem("silicon_sign_chat_auth");
+      localStorage.removeItem("silicon-sign-chat-access-token");
       toast.success("Signout Successful");
       setUser(null);
     } catch (error) {

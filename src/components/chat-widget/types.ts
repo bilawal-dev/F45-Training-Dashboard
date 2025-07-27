@@ -1,9 +1,9 @@
 // Location-related types
 export interface Location {
-    id: string;
-    name: string;
-    threadCount: number;
-  }
+  listId: string;
+  name: string;
+  threadCount: number;
+}
   
   // Thread-related types
   export interface Thread {
@@ -11,8 +11,13 @@ export interface Location {
     title: string;
     lastMessage: string;
     timestamp: string;
-    unread: boolean;
-    priority: 'high' | 'medium' | 'low';
+    userId: string;
+    listId: string;
+    folderId: string;
+    name: string;
+    slackThreadTs?: string | null;
+    createdAt: string;
+    updatedAt: string;
   }
   
   // Message-related types
@@ -82,11 +87,14 @@ export interface Location {
   export interface ChatSidebarProps {
     locations: Location[];
     threads: Thread[];
+    threadsLoading: boolean;
     selectedLocation: string | null;
     selectedThread: string | null;
     onLocationSelect: (locationId: string) => void;
     onThreadSelect: (threadId: string) => void;
-    onStartNewThread: () => void;
+    onStartNewThread: (name: string) => void;
+    onUpdateThread: (threadId: string, name: string) => void;
+    onDeleteThread: (threadId: string) => void;
   }
   
   export interface ChatThreadProps {
