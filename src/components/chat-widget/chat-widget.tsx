@@ -9,6 +9,7 @@ import { AuthContainer } from './auth/AuthContainer';
 import { ChatSidebar } from './chat-sidebar';
 import { ChatThread } from './chat-thread';
 import { ChatInput } from './chat-input';
+import { MessagesSkeleton } from './messages-skeleton';
 import type { Location, Thread, Message, ChatWidgetProps } from './types';
 
 
@@ -27,9 +28,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
     const [threads, setThreads] = useState<Thread[]>([]);
     const [locationsLoading, setLocationsLoading] = useState(true);
     const [threadsLoading, setThreadsLoading] = useState(false);
+    const [messagesLoading, setMessagesLoading] = useState(false);
+    const [isSending, setIsSending] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
     const [selectedThread, setSelectedThread] = useState<string | null>(null);
     const [newMessage, setNewMessage] = useState('');
+    const [messages, setMessages] = useState<Message[]>([]);
 
     const token = localStorage.getItem('silicon-sign-chat-access-token');
 
@@ -43,7 +47,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
         const fetchLocations = async () => {
           try {
             setLocationsLoading(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/chat/locations/${folderId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/locations/${folderId}`, {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
@@ -69,12 +73,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
     const fetchThreads = async (listId: string) => {
         if (!token) return;
         setThreadsLoading(true);
+        setThreads([]);
+        setSelectedThread(null);
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/chat/threads/${listId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/threads/${listId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            if (data.success) {
+            if (data.success && data.data.length > 0) {
                 const transformedThreads = data.data.map((thread: any) => ({
                     id: thread.id,
                     title: thread.name,
@@ -88,6 +94,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
                     updatedAt: thread.updatedAt,
                 }));
                 setThreads(transformedThreads);
+                setSelectedThread(transformedThreads[0].id);
             }
         } catch (error) {
             console.error('Failed to fetch threads:', error);
@@ -102,16 +109,94 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
         }
     }, [selectedLocation, token]);
 
-    const handleSendMessage = (message: string) => {
-        console.log('Sending message:', message);
-        setNewMessage('');
+    useEffect(() => {
+        const fetchMessages = async () => {
+            if (!selectedThread || !token) return;
+            setMessagesLoading(true);
+            setMessages([]);
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/messages/${selectedThread}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const fetchedMessages: Message[] = data.data.map((msg: any) => ({
+                        id: msg.id,
+                        content: msg.text,
+                        sender: msg.sender === 'USER' ? (user?.name || 'User') : 'Support',
+                        senderType: msg.sender === 'USER' ? 'user' : 'agent',
+                        timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        avatar: msg.sender === 'USER' ? '👨‍💼' : '👩‍💻',
+                    }));
+                    setMessages(fetchedMessages);
+                } else {
+                    console.error('Failed to fetch messages:', data.message);
+                    setMessages([]);
+                }
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+                setMessages([]);
+            } finally {
+                setMessagesLoading(false);
+            }
+        };
+
+        if (selectedThread) {
+            fetchMessages();
+        } else {
+            setMessages([]);
+        }
+    }, [selectedThread, token, user?.name]);
+
+    const handleSendMessage = async (message: string) => {
+        if (!message.trim() || !selectedThread || !token) {
+            return;
+        }
+
+        setIsSending(true);
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    threadId: selectedThread,
+                    text: message,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const apiMessage = data.data;
+                const newMessage: Message = {
+                    id: apiMessage.id,
+                    content: apiMessage.text,
+                    sender: user?.name || 'User',
+                    senderType: 'user',
+                    timestamp: new Date(apiMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    avatar: '👨‍💼',
+                };
+                setMessages(prevMessages => [...prevMessages, newMessage]);
+                setNewMessage('');
+            } else {
+                console.error('Failed to send message:', data.message);
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        } finally {
+            setIsSending(false);
+        }
     };
 
     const handleCreateThread = async (name: string) => {
         if (!selectedLocation || !token) return;
         const folderId = searchParams.get('folderId');
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/chat/threads`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/threads`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -133,7 +218,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
     const handleUpdateThread = async (threadId: string, name: string) => {
         if (!selectedLocation || !token) return;
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/chat/threads/${threadId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/threads/${threadId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -156,7 +241,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
         if (!selectedLocation || !token) return;
         if (window.confirm('Are you sure you want to delete this thread?')) {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/chat/threads/${threadId}`, {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/threads/${threadId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
@@ -201,15 +286,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
                 <div className="flex-1 flex flex-col overflow-y-auto">
                     {selectedThread ? (
                         <>
-                            <ChatThread
-                                messages={DEMO_MESSAGES[selectedThread] || []}
-                                threadTitle={threads.find(t => t.id === selectedThread)?.title || 'Chat'}
-                            />
+                            {messagesLoading ? (
+                                <MessagesSkeleton />
+                            ) : (
+                                <ChatThread
+                                    messages={messages}
+                                    threadTitle={threads.find(t => t.id === selectedThread)?.title || 'Chat'}
+                                />
+                            )}
                             <ChatInput
                                 value={newMessage}
                                 onChange={setNewMessage}
                                 onSend={handleSendMessage}
                                 placeholder="Type your message..."
+                                disabled={messagesLoading}
+                                isSending={isSending}
                             />
                         </>
                     ) : (

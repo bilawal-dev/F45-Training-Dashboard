@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ChatwootLoader from "./ChatWootLoader";
 import { ChatWidget } from "@/components/chat-widget";
 import { Suspense } from "react";
 import { AuthProvider } from "@/context/AuthContext";
@@ -16,10 +15,6 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
     <html suppressHydrationWarning={true} lang="en">
       <body suppressHydrationWarning={true} className="antialiased">
         <Toaster />
-
-        {/* <Suspense fallback={<div>Loading...</div>}>
-            <ChatwootLoader />
-            </Suspense> */}
 
         {children}
 

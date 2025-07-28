@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Clock, User, Headphones } from 'lucide-react';
-import { Message, ChatThreadProps } from './types';
+import { ChatThreadProps } from './types';
 
 export const ChatThread: React.FC<ChatThreadProps> = ({ messages, threadTitle }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);

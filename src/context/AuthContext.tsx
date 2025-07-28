@@ -32,7 +32,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (token) {
       const verifyToken = async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/auth/authenticate`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/authenticate`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/auth/login`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signup = async (name: string, email: string, password: string, showLogin: () => void) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CHAT_BACKEND_URL}/api/auth/signup`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
