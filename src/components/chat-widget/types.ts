@@ -109,6 +109,32 @@ export interface Location {
     onSend: (message: string) => void;
     placeholder?: string;
     disabled?: boolean;
+    isSending?: boolean;
+  }
+  
+  // Socket.IO related types
+  export interface SocketMessage {
+    id: string;
+    text: string;
+    sender: 'USER' | 'AGENT';
+    threadId: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+  
+  export interface SocketEvent {
+    threadJoined: { threadId: string };
+    threadLeft: { threadId: string };
+    newMessage: SocketMessage;
+    error: { message: string };
+  }
+  
+  // Connection state types
+  export interface SocketConnectionState {
+    isConnected: boolean;
+    isConnecting: boolean;
+    error: string | null;
+    currentThread: string | null;
   }
   
   // Event handler types

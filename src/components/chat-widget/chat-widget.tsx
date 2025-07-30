@@ -1,24 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MessageSquare, Users, Minimize2, LogOut } from 'lucide-react';
+import { MessageSquare, Users, Minimize2, LogOut, Wifi, WifiOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import { useSocket } from '@/hooks/useSocket';
 import { AuthLoader } from './auth/AuthLoader';
 import { AuthContainer } from './auth/AuthContainer';
 import { ChatSidebar } from './chat-sidebar';
 import { ChatThread } from './chat-thread';
 import { ChatInput } from './chat-input';
 import { MessagesSkeleton } from './messages-skeleton';
-import type { Location, Thread, Message, ChatWidgetProps } from './types';
+import type { Location, Thread, Message, ChatWidgetProps, SocketMessage } from './types';
 
 
-const DEMO_MESSAGES: Record<string, Message[]> = {
-    'thread-1': [
-        { id: 'msg-1', content: 'Treadmill #3 is down.', sender: 'Mike', senderType: 'user', timestamp: '10:30 AM', avatar: '👨‍💼' },
-        { id: 'msg-2', content: 'Maintenance is on the way.', sender: 'Sarah (Support)', senderType: 'agent', timestamp: '10:32 AM', avatar: '👩‍💻' },
-    ]
-};
+
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
     const { user, loading: authLoading, logout } = useAuth();
@@ -36,6 +33,65 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
     const [messages, setMessages] = useState<Message[]>([]);
 
     const token = localStorage.getItem('silicon-sign-chat-access-token');
+
+    // Handle incoming socket messages
+    const handleNewMessage = useCallback((socketMessage: SocketMessage) => {
+        // Only process messages for the currently selected thread
+        if (socketMessage.threadId !== selectedThread) {
+            return;
+        }
+
+        const newMessage: Message = {
+            id: socketMessage.id,
+            content: socketMessage.text,
+            sender: socketMessage.sender === 'USER' ? (user?.name || 'User') : 'Support',
+            senderType: socketMessage.sender === 'USER' ? 'user' : 'agent',
+            timestamp: new Date(socketMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            avatar: socketMessage.sender === 'USER' ? '👨‍💼' : '👩‍💻',
+        };
+
+        setMessages(prevMessages => {
+            // Check if message already exists to prevent duplicates
+            const messageExists = prevMessages.some(msg => msg.id === newMessage.id);
+            if (messageExists) {
+                return prevMessages;
+            }
+            
+            // Show a subtle toast for agent messages (from Slack)
+            if (socketMessage.sender === 'AGENT') {
+                toast.success('New message from support', {
+                    duration: 2000,
+                    position: 'top-right',
+                });
+            }
+            
+            return [...prevMessages, newMessage];
+        });
+    }, [selectedThread, user?.name]);
+
+    // Handle socket errors
+    const handleSocketError = useCallback((error: string) => {
+        console.error('Socket error:', error);
+        if (error.includes('Authentication')) {
+            toast.error('Authentication failed. Please refresh and login again.');
+        } else {
+            toast.error(`Connection error: ${error}`);
+        }
+    }, []);
+
+    // Initialize socket connection
+    const {
+        isConnected,
+        isConnecting,
+        error: socketError,
+        currentThread,
+        joinThread,
+        leaveThread,
+    } = useSocket({
+        token,
+        onNewMessage: handleNewMessage,
+        onError: handleSocketError,
+    });
 
     useEffect(() => {
       const folderId = searchParams.get('folderId');
@@ -148,6 +204,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
         }
     }, [selectedThread, token, user?.name]);
 
+    // Handle thread room management
+    useEffect(() => {
+        if (!isConnected) return;
+
+        // Leave previous thread if we were in one
+        if (currentThread && currentThread !== selectedThread) {
+            leaveThread(currentThread);
+        }
+
+        // Join new thread if one is selected
+        if (selectedThread && selectedThread !== currentThread) {
+            joinThread(selectedThread);
+        }
+    }, [selectedThread, isConnected, currentThread, joinThread, leaveThread]);
+
     const handleSendMessage = async (message: string) => {
         if (!message.trim() || !selectedThread || !token) {
             return;
@@ -171,17 +242,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
             const data = await response.json();
 
             if (data.success) {
-                const apiMessage = data.data;
-                const newMessage: Message = {
-                    id: apiMessage.id,
-                    content: apiMessage.text,
-                    sender: user?.name || 'User',
-                    senderType: 'user',
-                    timestamp: new Date(apiMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    avatar: '👨‍💼',
-                };
-                setMessages(prevMessages => [...prevMessages, newMessage]);
+                // Message will be added via socket, so we just clear the input
                 setNewMessage('');
+                console.log('✅ Message sent successfully, waiting for socket update');
             } else {
                 console.error('Failed to send message:', data.message);
             }
@@ -341,6 +404,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ className = '' }) => {
                                 <div className="flex items-center space-x-1 text-blue-100">
                                     <Users size={14} />
                                     <span className="text-xs">{user.name}</span>
+                                </div>
+                                {/* Connection Status Indicator */}
+                                <div className="flex items-center space-x-1 text-blue-100" title={
+                                    isConnected ? 'Connected' : 
+                                    isConnecting ? 'Connecting...' : 
+                                    socketError ? `Error: ${socketError}` : 'Disconnected'
+                                }>
+                                    {isConnected ? (
+                                        <Wifi size={14} className="text-green-300" />
+                                    ) : (
+                                        <WifiOff size={14} className="text-red-300" />
+                                    )}
+                                    <span className="text-xs">
+                                        {isConnecting ? 'Connecting...' : isConnected ? 'Live' : 'Offline'}
+                                    </span>
                                 </div>
                                 <button onClick={logout} className="cursor-pointer text-blue-100 hover:text-white transition-colors" title="Logout">
                                     <LogOut size={16} />
